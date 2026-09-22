@@ -2716,6 +2716,16 @@
             };
         }
 
+        function normalizeGoalIdsForPersistence(goals) {
+            const idMap = new Map();
+            return goals.map(goal => {
+                if (isSupabaseUuid(goal.id)) return goal;
+                const identity = `${goal.lojaId || ''}:${goal.weekStart || ''}:${goal.weekEnd || ''}:${(goal.distributions || []).map(item => item.userId).sort().join(',')}`;
+                if (!idMap.has(identity)) idMap.set(identity, crypto.randomUUID());
+                return { ...goal, id: idMap.get(identity) };
+            });
+        }
+
         function getWeeklyGoals() {
             const weeklyGoals = readStoredList('siga-metas-semanais').map(item => normalizeWeeklyGoal(item)).filter(Boolean);
             const legacyGoals = readStoredList('siga-metas')
@@ -2748,13 +2758,14 @@
         }
 
         async function saveWeeklyGoals(list) {
-            const normalizedList = (Array.isArray(list) ? list : []).map(item => normalizeWeeklyGoal(item)).filter(Boolean);
+            const normalizedList = normalizeGoalIdsForPersistence((Array.isArray(list) ? list : []).map(item => normalizeWeeklyGoal(item)).filter(Boolean));
             const previous = getWeeklyGoals();
             localStorage.setItem('siga-metas-semanais', JSON.stringify(normalizedList));
             syncStoredList('siga-metas-semanais', normalizedList, previous.filter(item => !normalizedList.some(next => next.id === item.id)).map(item => item.id));
 
+            const previousLegacy = readStoredList('siga-metas');
             const legacyGoals = normalizedList.flatMap(goal => (goal.distributions || []).map(distribution => ({
-                id: `${goal.id}:${distribution.userId}`,
+                id: previousLegacy.find(item => String(item.lojaId || item.loja_id) === String(goal.lojaId) && String(item.userId || item.vendedor_id) === String(distribution.userId) && String(item.weekStart || item.semana_inicio) === String(goal.weekStart) && isSupabaseUuid(item.id))?.id || crypto.randomUUID(),
                 lojaId: goal.lojaId,
                 userId: distribution.userId,
                 weekStart: goal.weekStart,
@@ -2766,7 +2777,6 @@
                 value: Number(distribution.value || distribution.diamond || 0),
                 month: goal.weekStart ? goal.weekStart.slice(0, 7) : new Date().toISOString().slice(0, 7)
             })));
-            const previousLegacy = readStoredList('siga-metas');
             const mergedLegacy = mergeStoredLists(
                 previousLegacy.filter(item => !legacyGoals.some(goal => goal.id === item.id && (item.lojaId || item.loja_id) === goal.lojaId && (item.userId || item.vendedor_id) === goal.userId)),
                 legacyGoals
@@ -2793,6 +2803,12 @@
             } catch (error) {
                 console.warn('Sincronização direta de metas falhou:', error);
             }
+        }
+
+        async function migrateLocalGoalsToSupabase() {
+            const localGoals = getWeeklyGoals();
+            if (!localGoals.length) return;
+            await saveWeeklyGoals(localGoals);
         }
 
         function getGoals() { return getWeeklyGoals(); }
@@ -3579,6 +3595,7 @@
             if (data.session && getSession()?.type === 'master') saveSession({ type: 'master' });
             if (getSession()?.type === 'master') await removeDemoStoresFromSupabase();
             await hydrateFromSupabase();
+            if (getSession()?.type === 'user') await migrateLocalGoalsToSupabase();
             retryPendingSupabaseSyncs();
             pruneExpiredProjectData();
             if (getSession()?.type === 'user' && getSession()?.role === 'gerente' && location.hash === '#manager-goals') {

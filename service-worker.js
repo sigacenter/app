@@ -1,4 +1,4 @@
-const CACHE_NAME = 'siga-shell-v3';
+const CACHE_NAME = 'siga-shell-v4';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 self.addEventListener('install', event => {
