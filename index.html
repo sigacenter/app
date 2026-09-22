@@ -348,8 +348,8 @@
 
         <!-- SELETOR DE PERÍODO -->
         <div class="flex justify-center p-1.5 bg-slate-100 rounded-2xl max-w-sm mx-auto shadow-inner">
-            <button onclick="switchPeriod('dia')" id="btn-dia" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all">DIA</button>
-            <button onclick="switchPeriod('semana')" id="btn-semana" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white shadow-sm text-indigo-600">SEMANA</button>
+            <button onclick="switchPeriod('dia')" id="btn-dia" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all bg-white shadow-sm text-indigo-600">DIA</button>
+            <button onclick="switchPeriod('semana')" id="btn-semana" class="flex-1 py-2 text-xs font-bold rounded-xl transition-all">SEMANA</button>
         </div>
 
         <!-- PERFORMANCE CARD -->
@@ -3038,6 +3038,34 @@
             return { originalDaily, adjustedDaily, realized, balance, remainingDays, currentTicket, requiredTicket };
         }
 
+        function buildWeeklyGoalInsight(target, realized, services, sales) {
+            const attendanceCount = services.length;
+            const conversionCount = services.filter(service => service.outcome === 'converted').length;
+            const ticketAverage = sales.length ? realized / sales.length : 0;
+            const conversionRate = attendanceCount ? conversionCount / attendanceCount : 0;
+            const gap = Math.max(0, target - realized);
+            const summary = `Nesta semana: ${attendanceCount} atendimento${attendanceCount === 1 ? '' : 's'}, ${conversionCount} venda${conversionCount === 1 ? '' : 's'} convertida${conversionCount === 1 ? '' : 's'} e ticket médio de ${money(ticketAverage)}.`;
+            if (!gap) return `${summary} Meta semanal alcançada.`;
+
+            const recommendations = [];
+            if (conversionRate > 0 && ticketAverage > 0) {
+                const extraAttendances = Math.max(1, Math.ceil(gap / (conversionRate * ticketAverage)));
+                recommendations.push(`atenda pelo menos mais ${extraAttendances} cliente${extraAttendances === 1 ? '' : 's'}`);
+            }
+            if (ticketAverage > 0 && attendanceCount > 0) {
+                const neededConversions = Math.max(1, Math.ceil(gap / ticketAverage));
+                const targetConversions = conversionCount + neededConversions;
+                if (targetConversions <= attendanceCount) recommendations.push(`aumente sua conversão para ${targetConversions} de ${attendanceCount} clientes`);
+            }
+            if (conversionCount > 0) {
+                const targetTicket = target / conversionCount;
+                const ticketIncrease = Math.max(0, targetTicket - ticketAverage);
+                if (ticketIncrease > 0) recommendations.push(`aumente seu ticket médio em ${money(ticketIncrease)}`);
+            }
+            if (!recommendations.length) recommendations.push('aumente o número de atendimentos e trabalhe a conversão de novos clientes');
+            return `${summary} Para alcançar a meta Diamante, ${recommendations.join(' ou ')}.`;
+        }
+
         function currentGoalData() {
             const goal = goalForCurrentUser();
             const today = getLocalDateKey();
@@ -3060,10 +3088,13 @@
             const salesEnd = end;
             const total = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd).reduce((sum, sale) => sum + Number(sale.value || 0), 0);
             const goalValues = configuredGoalValues(period, weekly, null, target, businessDays);
-            const dailyMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, sales.filter(sale => sale.date >= weekly.weekStart && sale.date <= weekly.weekEnd));
+            const weeklySales = sales.filter(sale => sale.date >= weekly.weekStart && sale.date <= weekly.weekEnd);
+            const weeklyServices = getServices().filter(service => service.date >= weekly.weekStart && service.date <= weekly.weekEnd);
+            const dailyMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales);
             const ticketSales = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd);
             const ticketAverage = ticketSales.length ? total / ticketSales.length : 0;
-            return { goal: goalValues, target, total, ticketAverage, dailyMetrics, weeklyTarget: weekTarget, start: salesStart, end: salesEnd, period };
+            const weeklyGoalInsight = buildWeeklyGoalInsight(weekTarget, dailyMetrics.realized, weeklyServices, weeklySales);
+            return { goal: goalValues, target, total, ticketAverage, dailyMetrics, weeklyGoalInsight, weeklyTarget: weekTarget, start: salesStart, end: salesEnd, period };
         }
 
         function goalMarkerScale(goal) {
@@ -3124,20 +3155,17 @@
             document.getElementById('ticket-medio').innerHTML = `${money(data.ticketAverage)} <i data-lucide="trending-up" class="h-3 w-3"></i>`;
             const metrics = data.dailyMetrics;
             const targetValue = target || data.target || 0;
-            const missingValue = Math.max(0, targetValue - data.total);
             const statusMessage = targetValue <= 0
                 ? period === 'dia'
                     ? 'Nenhuma meta diária foi configurada para este vendedor.'
                     : 'Nenhuma meta semanal foi configurada para este vendedor.'
+                : period === 'semana'
+                ? data.weeklyGoalInsight
                 : metrics.remainingDays === 0
-                ? `${period === 'dia' ? 'Dia' : 'Semana'} encerrado: ${money(metrics.realized)} realizados de ${money(targetValue)}.`
+                ? `Dia encerrado: ${money(data.total)} realizados de ${money(targetValue)}.`
                 : data.total < targetValue
-                ? period === 'dia'
-                    ? `Abaixo do ritmo: ${money(metrics.realized)} realizados na semana. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`
-                    : `Abaixo do ritmo: meta original ${money(metrics.originalDaily)}. Faltam ${money(missingValue)} para atingir a meta do dia.`
-                : period === 'dia'
-                    ? `Dentro do ritmo: ${money(metrics.realized)} realizados na semana. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`
-                    : `Dentro do ritmo: meta original ${money(metrics.originalDaily)}. A meta diária do próximo dia permanece em ${money(metrics.originalDaily)}.`;
+                ? `Hoje: ${money(data.total)} realizados. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`
+                : `Hoje: ${money(data.total)} realizados. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`;
             document.getElementById('goal-status-message').textContent = statusMessage;
             document.getElementById('progress-fill').style.width = `${percent}%`;
             const badge = document.getElementById('badge-nivel');
@@ -5240,7 +5268,7 @@
             modal.classList.remove('flex');
         }
 
-        window.activeGoalPeriod = 'semana';
+        window.activeGoalPeriod = 'dia';
 
         function switchPeriod(p) {
             const normalizedPeriod = p === 'mes' ? 'semana' : p;
