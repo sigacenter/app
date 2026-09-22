@@ -1851,7 +1851,7 @@
             }
             const viewingVendor = vendors.find(vendor => vendor.id === session.viewingUserId);
             const inVendorPanel = Boolean(viewingVendor);
-            document.getElementById('desktop-navigation').classList.toggle('hidden', !inVendorPanel);
+            document.getElementById('desktop-navigation').classList.toggle('hidden', session.role !== 'gerente' && !inVendorPanel);
             document.getElementById('mobile-navigation').classList.toggle('hidden', !inVendorPanel);
             const fabButton = document.getElementById('fab-button');
             if (fabButton) fabButton.classList.remove('hidden');
@@ -4924,7 +4924,17 @@
                 event.preventDefault();
                 showPage('dashboard');
             });
-            document.querySelectorAll('[data-desktop-page]').forEach(button => button.addEventListener('click', () => showPage(button.dataset.desktopPage)));
+            document.querySelectorAll('[data-desktop-page]').forEach(button => button.addEventListener('click', async () => {
+                const session = getSession();
+                const vendors = session?.role === 'gerente' ? getUsuarios().filter(user => user.lojaId === session.lojaId && user.role === 'vendedor') : [];
+                if (session?.role === 'gerente' && !session.viewingUserId && vendors.length) {
+                    session.viewingUserId = vendors[0].id;
+                    saveSession(session);
+                    await hydrateFromSupabase();
+                    renderManagerBar();
+                }
+                showPage(button.dataset.desktopPage);
+            }));
             bindBackButtons();
             document.getElementById('dashboard-sales-title').addEventListener('click', () => showPage('sales'));
             document.getElementById('dashboard-service-title').addEventListener('click', () => showPage('service'));
