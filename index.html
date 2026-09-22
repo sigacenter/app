@@ -3073,6 +3073,19 @@
             return { originalDaily, adjustedDaily, realized, balance, remainingDays, currentTicket, requiredTicket };
         }
 
+        function adjustDailyGoalValues(values, adjustedDiamond) {
+            const originalDiamond = Number(values.diamond || 0);
+            const targetDiamond = Math.max(originalDiamond, Number(adjustedDiamond || 0));
+            if (!originalDiamond || targetDiamond <= originalDiamond) return { ...values, diamond: originalDiamond };
+            const ratio = targetDiamond / originalDiamond;
+            return {
+                bronze: Math.max(Number(values.bronze || 0), Number(values.bronze || 0) * ratio),
+                silver: Math.max(Number(values.silver || 0), Number(values.silver || 0) * ratio),
+                gold: Math.max(Number(values.gold || 0), Number(values.gold || 0) * ratio),
+                diamond: targetDiamond
+            };
+        }
+
         function buildWeeklyGoalInsight(target, realized, services, sales, remainingDays) {
             const attendanceCount = services.length;
             const conversionCount = services.filter(service => service.outcome === 'converted').length;
@@ -3123,7 +3136,7 @@
             const salesStart = start;
             const salesEnd = end;
             const total = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd).reduce((sum, sale) => sum + Number(sale.value || 0), 0);
-            const goalValues = configuredGoalValues(period, weekly, null, dailyTarget, businessDays);
+            const configuredValues = configuredGoalValues(period, weekly, null, dailyTarget, businessDays);
             const weeklySales = sales.filter(sale => sale.date >= weekly.weekStart && sale.date <= weekly.weekEnd);
             const weeklyServices = getServices().filter(service => service.date >= weekly.weekStart && service.date <= weekly.weekEnd);
             const yesterday = new Date(`${today}T12:00:00`);
@@ -3131,6 +3144,7 @@
             const todayMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales, weekly.holidays, getLocalDateKey(yesterday));
             const nextDayMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales, weekly.holidays, today);
             const target = period === 'dia' ? todayMetrics.adjustedDaily : weekTarget;
+            const goalValues = period === 'dia' ? adjustDailyGoalValues(configuredValues, todayMetrics.adjustedDaily) : configuredValues;
             const ticketSales = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd);
             const ticketAverage = ticketSales.length ? total / ticketSales.length : 0;
             const weeklyGoalInsight = buildWeeklyGoalInsight(weekTarget, nextDayMetrics.realized, weeklyServices, weeklySales, nextDayMetrics.remainingDays);
