@@ -3026,13 +3026,12 @@
             const businessDays = countBusinessDays(weekStart, weekEnd);
             const elapsedEnd = today < weekEnd ? today : weekEnd;
             const elapsedDays = today < weekStart ? 0 : countBusinessDays(weekStart, elapsedEnd);
-            const daysIncludingToday = today > weekEnd ? 0 : countBusinessDays(today < weekStart ? weekStart : today, weekEnd);
-            const remainingDays = Math.max(0, daysIncludingToday - 1);
+            const remainingDays = today >= weekEnd ? 0 : countBusinessDays(today < weekStart ? weekStart : getLocalDateKey(new Date(`${today}T12:00:00`)), weekEnd) - (today >= weekStart ? 1 : 0);
             const realizedSales = sales.filter(sale => sale.date >= weekStart && sale.date <= elapsedEnd);
             const realized = realizedSales.reduce((sum, sale) => sum + Number(sale.value || 0), 0);
             const originalDaily = businessDays ? weeklyTarget / businessDays : weeklyTarget;
             const balance = Math.max(0, weeklyTarget - realized);
-            const adjustedDaily = remainingDays ? balance / remainingDays : 0;
+            const adjustedDaily = remainingDays ? Math.max(originalDaily, balance / remainingDays) : originalDaily;
             const currentTicket = realizedSales.length ? realized / realizedSales.length : 0;
             const averageTransactionsPerDay = elapsedDays ? realizedSales.length / elapsedDays : 1;
             const requiredTicket = adjustedDaily / Math.max(1, averageTransactionsPerDay);
@@ -3061,7 +3060,7 @@
             const salesEnd = end;
             const total = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd).reduce((sum, sale) => sum + Number(sale.value || 0), 0);
             const goalValues = configuredGoalValues(period, weekly, null, target, businessDays);
-            const dailyMetrics = calculateDailyGoalMetrics(period === 'dia' ? dailyTarget : weekTarget, start, end, sales.filter(sale => sale.date >= weekly.weekStart && sale.date <= weekly.weekEnd));
+            const dailyMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, sales.filter(sale => sale.date >= weekly.weekStart && sale.date <= weekly.weekEnd));
             const ticketSales = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd);
             const ticketAverage = ticketSales.length ? total / ticketSales.length : 0;
             return { goal: goalValues, target, total, ticketAverage, dailyMetrics, weeklyTarget: weekTarget, start: salesStart, end: salesEnd, period };
@@ -3133,8 +3132,12 @@
                 : metrics.remainingDays === 0
                 ? `${period === 'dia' ? 'Dia' : 'Semana'} encerrado: ${money(metrics.realized)} realizados de ${money(targetValue)}.`
                 : data.total < targetValue
-                ? `Abaixo do ritmo: meta original ${money(metrics.originalDaily)}. Faltam ${money(missingValue)} para atingir a meta do dia.`
-                : `Dentro do ritmo: meta original ${money(metrics.originalDaily)}. A meta diária do próximo dia permanece em ${money(metrics.originalDaily)}.`;
+                ? period === 'dia'
+                    ? `Abaixo do ritmo: ${money(metrics.realized)} realizados na semana. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`
+                    : `Abaixo do ritmo: meta original ${money(metrics.originalDaily)}. Faltam ${money(missingValue)} para atingir a meta do dia.`
+                : period === 'dia'
+                    ? `Dentro do ritmo: ${money(metrics.realized)} realizados na semana. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`
+                    : `Dentro do ritmo: meta original ${money(metrics.originalDaily)}. A meta diária do próximo dia permanece em ${money(metrics.originalDaily)}.`;
             document.getElementById('goal-status-message').textContent = statusMessage;
             document.getElementById('progress-fill').style.width = `${percent}%`;
             const badge = document.getElementById('badge-nivel');
