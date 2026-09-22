@@ -2180,7 +2180,7 @@
                 document.getElementById('manager-task-feedback').textContent = `Tarefa lançada para ${selectedVendors.length} vendedor${selectedVendors.length === 1 ? '' : 'es'}.`;
                 event.target.reset(); document.getElementById('manager-task-repeat-end').value = ''; renderManagerTaskWeekdays(); renderManagerTaskVendors(); renderManagerOverview();
             });
-            document.getElementById('weekly-goal-form').addEventListener('submit', event => {
+            document.getElementById('weekly-goal-form').addEventListener('submit', async event => {
                 event.preventDefault();
                 const session = getSession();
                 const start = document.getElementById('weekly-goal-start').value;
@@ -2188,6 +2188,18 @@
                 const holidays = Array.from(document.querySelectorAll('[data-weekly-holiday]:checked')).map(input => input.value);
                 const name = document.getElementById('weekly-goal-name').value.trim();
                 const vendors = getUsuarios().filter(item => item.lojaId === session.lojaId && item.role === 'vendedor');
+                const feedback = document.getElementById('goal-form-feedback');
+                feedback.className = 'mt-3 min-h-4 text-center text-[10px] font-bold text-amber-600';
+                feedback.textContent = 'Salvando metas...';
+                if (!vendors.length) {
+                    feedback.textContent = 'Nenhum vendedor válido foi encontrado nesta loja.';
+                    return;
+                }
+                const invalidVendor = vendors.find(user => !isSupabaseUuid(user.id));
+                if (invalidVendor) {
+                    feedback.textContent = `O acesso de ${invalidVendor.name || 'um vendedor'} possui ID inválido. Atualize a equipe antes de criar a meta.`;
+                    return;
+                }
                 const distributions = vendors.map(user => {
                     const values = Array.from(document.querySelectorAll(`[data-weekly-vendor="${user.id}"]`)).reduce((result, input) => {
                         const tier = input.dataset.weeklyTier;
@@ -2205,14 +2217,22 @@
                     if (ordered.some((value, index) => index > 0 && value < ordered[index - 1])) return { userId: user.id, invalid: true };
                     return { userId: user.id, percentage: 100, value: diamond, bronze, silver, gold, diamond };
                 }).filter(Boolean);
-                const invalidVendor = distributions.find(item => item.invalid);
-                if (end < start) return document.getElementById('goal-form-feedback').textContent = 'A data final da semana não pode ser anterior à data inicial.';
-                if (!distributions.length) return document.getElementById('goal-form-feedback').textContent = 'Defina pelo menos um valor de meta para um vendedor.';
-                if (invalidVendor) return document.getElementById('goal-form-feedback').textContent = 'As metas por faixa devem seguir a ordem Bronze ≤ Prata ≤ Ouro ≤ Diamante.';
+                const invalidDistribution = distributions.find(item => item.invalid);
+                if (end < start) { feedback.textContent = 'A data final da semana não pode ser anterior à data inicial.'; return; }
+                if (!distributions.length) { feedback.textContent = 'Defina pelo menos um valor de meta para um vendedor.'; return; }
+                if (invalidDistribution) { feedback.textContent = 'As metas por faixa devem seguir a ordem Bronze ≤ Prata ≤ Ouro ≤ Diamante.'; return; }
                 const total = distributions.reduce((sum, item) => sum + Number(item.value || 0), 0);
                 const weeklyGoals = getWeeklyGoals();
                 const existing = weeklyGoals.find(item => item.id === document.getElementById('weekly-goal-form').dataset.editingId);
-                saveWeeklyGoals([...weeklyGoals.filter(item => item.id !== existing?.id), { id: existing?.id || crypto.randomUUID(), lojaId: session.lojaId, monthlyGoalId: null, name: name || 'Semana', weekStart: start, weekEnd: end, total, holidays, distributions }]);
+                try {
+                    await saveWeeklyGoals([...weeklyGoals.filter(item => item.id !== existing?.id), { id: existing?.id || crypto.randomUUID(), lojaId: session.lojaId, metaMensalId: existing?.metaMensalId || null, name: name || 'Semana', weekStart: start, weekEnd: end, total, holidays, distributions }]);
+                } catch (error) {
+                    feedback.className = 'mt-3 min-h-4 text-center text-[10px] font-bold text-red-600';
+                    feedback.textContent = `Falha ao salvar: ${error.message || 'erro desconhecido'}`;
+                    return;
+                }
+                feedback.className = 'mt-3 min-h-4 text-center text-[10px] font-bold text-emerald-600';
+                feedback.textContent = `Meta salva para ${distributions.length} vendedor${distributions.length === 1 ? '' : 'es'}.`;
                 event.target.reset(); event.target.dataset.editingId = ''; renderGoalForm();
             });
             document.getElementById('goal-markers').addEventListener('click', event => {
@@ -2837,6 +2857,7 @@
                 }
             } catch (error) {
                 console.warn('Sincronização direta de metas falhou:', { message: error.message, code: error.code, details: error.details, hint: error.hint });
+                throw error;
             }
         }
 
