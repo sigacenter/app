@@ -307,6 +307,7 @@
                     <button type="button" id="manager-open-vendor-button" class="rounded-lg bg-slate-700 px-3 py-1.5 text-[10px] font-black text-white hover:bg-slate-800">Abrir painel</button>
                     <button type="button" id="manager-overview-button" class="rounded-lg bg-amber-500 px-3 py-1.5 text-[10px] font-black text-white hover:bg-amber-600">Tarefas</button>
                     <button type="button" id="manager-report-button" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-emerald-700">Relatório</button>
+                    <button type="button" id="manager-outcomes-button" class="rounded-lg bg-violet-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-violet-700">Resultados</button>
                     <button type="button" id="manager-goals-button" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-indigo-700">Metas</button>
                     <button type="button" id="manager-prospecting-button" class="rounded-lg bg-sky-600 px-3 py-1.5 text-[10px] font-black text-white hover:bg-sky-700">Prospecção</button>
                 </div>
@@ -2168,6 +2169,7 @@
             });
             document.getElementById('manager-overview-button').addEventListener('click', () => { location.hash = 'manager-overview'; });
             document.getElementById('manager-report-button').addEventListener('click', () => { location.hash = 'manager-report'; });
+            document.getElementById('manager-outcomes-button').addEventListener('click', () => { location.hash = 'manager-report'; setTimeout(() => document.getElementById('manager-outcome-management')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0); });
             document.getElementById('manager-goals-button').addEventListener('click', () => { location.hash = 'manager-goals'; });
             document.getElementById('manager-prospecting-button').addEventListener('click', () => { location.hash = 'manager-prospecting'; });
             document.getElementById('prospecting-list-form').addEventListener('submit', event => {
