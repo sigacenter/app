@@ -4783,10 +4783,6 @@
 
         function openNewTaskModal(selectedDate = null) {
             const requestedDate = selectedDate || pendingAddDate || currentSelectedDate;
-            if (requestedDate < getLocalDateKey()) {
-                showToast('Não é possível cadastrar tarefas em dias que já passaram.', 'error');
-                return;
-            }
             pendingAddDate = requestedDate;
             document.getElementById('new-task-modal').classList.remove('hidden');
             document.getElementById('new-task-modal').classList.add('flex');
