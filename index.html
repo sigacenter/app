@@ -3053,8 +3053,8 @@
             return values;
         }
 
-        function calculateDailyGoalMetrics(weeklyTarget, weekStart, weekEnd, sales, holidays = []) {
-            const today = getLocalDateKey();
+        function calculateDailyGoalMetrics(weeklyTarget, weekStart, weekEnd, sales, holidays = [], referenceDate = getLocalDateKey()) {
+            const today = referenceDate;
             const businessDays = countBusinessDays(weekStart, weekEnd, holidays);
             const elapsedEnd = today < weekEnd ? today : weekEnd;
             const elapsedDays = today < weekStart ? 0 : countBusinessDays(weekStart, elapsedEnd, holidays);
@@ -3126,12 +3126,15 @@
             const goalValues = configuredGoalValues(period, weekly, null, dailyTarget, businessDays);
             const weeklySales = sales.filter(sale => sale.date >= weekly.weekStart && sale.date <= weekly.weekEnd);
             const weeklyServices = getServices().filter(service => service.date >= weekly.weekStart && service.date <= weekly.weekEnd);
-            const dailyMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales, weekly.holidays);
-            const target = period === 'dia' ? dailyMetrics.adjustedDaily : weekTarget;
+            const yesterday = new Date(`${today}T12:00:00`);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const todayMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales, weekly.holidays, getLocalDateKey(yesterday));
+            const nextDayMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales, weekly.holidays, today);
+            const target = period === 'dia' ? todayMetrics.adjustedDaily : weekTarget;
             const ticketSales = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd);
             const ticketAverage = ticketSales.length ? total / ticketSales.length : 0;
-            const weeklyGoalInsight = buildWeeklyGoalInsight(weekTarget, dailyMetrics.realized, weeklyServices, weeklySales, dailyMetrics.remainingDays);
-            return { goal: goalValues, target, total, ticketAverage, dailyMetrics, weeklyGoalInsight, weeklyTarget: weekTarget, start: salesStart, end: salesEnd, period };
+            const weeklyGoalInsight = buildWeeklyGoalInsight(weekTarget, nextDayMetrics.realized, weeklyServices, weeklySales, nextDayMetrics.remainingDays);
+            return { goal: goalValues, target, total, ticketAverage, dailyMetrics: todayMetrics, nextDayMetrics, weeklyGoalInsight, weeklyTarget: weekTarget, start: salesStart, end: salesEnd, period };
         }
 
         function goalMarkerScale(goal) {
@@ -3181,7 +3184,7 @@
             const data = currentGoalData();
             const goal = data.goal;
             const configuredTarget = Number(goal.diamond || data.target || 0);
-            const target = data.period === 'dia' ? Number(data.dailyMetrics.adjustedDaily || configuredTarget) : configuredTarget;
+            const target = data.period === 'dia' ? Number(data.target || configuredTarget) : configuredTarget;
             const percent = goalProgressPercent(data.total, goal);
             const period = data.period || 'semana';
             const label = period === 'dia' ? 'Meta Diária' : 'Meta Semanal';
@@ -3199,11 +3202,11 @@
                     : 'Nenhuma meta semanal foi configurada para este vendedor.'
                 : period === 'semana'
                 ? data.weeklyGoalInsight
-                : metrics.remainingDays === 0
+                : data.nextDayMetrics.remainingDays === 0
                 ? `Dia encerrado: ${money(data.total)} realizados de ${money(targetValue)}.`
                 : data.total < targetValue
-                ? `Hoje: ${money(data.total)} realizados. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`
-                : `Hoje: ${money(data.total)} realizados. Meta do próximo dia: ${money(metrics.adjustedDaily)}.`;
+                ? `Hoje: ${money(data.total)} realizados. Meta do próximo dia: ${money(data.nextDayMetrics.adjustedDaily)}.`
+                : `Hoje: ${money(data.total)} realizados. Meta do próximo dia: ${money(data.nextDayMetrics.adjustedDaily)}.`;
             document.getElementById('goal-status-message').textContent = statusMessage;
             document.getElementById('progress-fill').style.width = `${percent}%`;
             const badge = document.getElementById('badge-nivel');
