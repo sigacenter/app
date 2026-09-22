@@ -1155,7 +1155,7 @@
                 const stores = getLojas().filter(store => storeIds.includes(store.id));
                 if (stores.length !== storeIds.length) return new Error(`A loja vinculada a ${table} não foi encontrada neste dispositivo.`);
                 const { error } = await sigaSupabase.from('lojas').upsert(stores.map(store => ({ id: store.id, nome: store.name, slug: store.slug, configuracoes: store.configuracoes || {}, created_at: store.createdAt })));
-                if (error) return error;
+                             if (error) return error;
             }
 
             if (table === 'perfis') return null;
@@ -3038,7 +3038,7 @@
             return { originalDaily, adjustedDaily, realized, balance, remainingDays, currentTicket, requiredTicket };
         }
 
-        function buildWeeklyGoalInsight(target, realized, services, sales) {
+        function buildWeeklyGoalInsight(target, realized, services, sales, remainingDays) {
             const attendanceCount = services.length;
             const conversionCount = services.filter(service => service.outcome === 'converted').length;
             const ticketAverage = sales.length ? realized / sales.length : 0;
@@ -3046,23 +3046,25 @@
             const gap = Math.max(0, target - realized);
             const summary = `Nesta semana: ${attendanceCount} atendimento${attendanceCount === 1 ? '' : 's'}, ${conversionCount} venda${conversionCount === 1 ? '' : 's'} convertida${conversionCount === 1 ? '' : 's'} e ticket médio de ${money(ticketAverage)}.`;
             if (!gap) return `${summary} Meta semanal alcançada.`;
+            if (!remainingDays) return `${summary} Último dia do ciclo: concentre-se em concluir as oportunidades de hoje.`;
+            const dailyGap = gap / remainingDays;
 
             const recommendations = [];
             if (conversionRate > 0 && ticketAverage > 0) {
-                const extraAttendances = Math.max(1, Math.ceil(gap / (conversionRate * ticketAverage)));
-                recommendations.push(`atenda pelo menos mais ${extraAttendances} cliente${extraAttendances === 1 ? '' : 's'}`);
+                const extraAttendances = Math.max(1, Math.ceil(dailyGap / (conversionRate * ticketAverage)));
+                recommendations.push(`atenda pelo menos mais ${extraAttendances} cliente${extraAttendances === 1 ? '' : 's'} por dia`);
             }
             if (ticketAverage > 0 && attendanceCount > 0) {
-                const neededConversions = Math.max(1, Math.ceil(gap / ticketAverage));
+                const neededConversions = Math.max(1, Math.ceil(dailyGap / ticketAverage));
                 const targetConversions = conversionCount + neededConversions;
                 if (targetConversions <= attendanceCount) recommendations.push(`aumente sua conversão para ${targetConversions} de ${attendanceCount} clientes`);
             }
             if (conversionCount > 0) {
-                const targetTicket = target / conversionCount;
+                const targetTicket = dailyGap / conversionCount;
                 const ticketIncrease = Math.max(0, targetTicket - ticketAverage);
                 if (ticketIncrease > 0) recommendations.push(`aumente seu ticket médio em ${money(ticketIncrease)}`);
             }
-            if (!recommendations.length) recommendations.push('aumente o número de atendimentos e trabalhe a conversão de novos clientes');
+            if (!recommendations.length) recommendations.push('aumente o número de atendimentos e trabalhe a conversão das oportunidades de cada dia');
             return `${summary} Para alcançar a meta Diamante, ${recommendations.join(' ou ')}.`;
         }
 
@@ -3093,7 +3095,7 @@
             const dailyMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales);
             const ticketSales = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd);
             const ticketAverage = ticketSales.length ? total / ticketSales.length : 0;
-            const weeklyGoalInsight = buildWeeklyGoalInsight(weekTarget, dailyMetrics.realized, weeklyServices, weeklySales);
+            const weeklyGoalInsight = buildWeeklyGoalInsight(weekTarget, dailyMetrics.realized, weeklyServices, weeklySales, dailyMetrics.remainingDays);
             return { goal: goalValues, target, total, ticketAverage, dailyMetrics, weeklyGoalInsight, weeklyTarget: weekTarget, start: salesStart, end: salesEnd, period };
         }
 
@@ -3936,11 +3938,13 @@
         }
 
         function navigationHasOpenTasks() {
-            return getTasks().some(task => !task.completed && !isPastTask(task));
+            const today = getLocalDateKey();
+            return getTasks().some(task => taskDateValue(task) === today && !task.completed);
         }
 
         function navigationHasOverdueTasks() {
-            return getTasks().some(task => isTaskOverdue(task));
+            const today = getLocalDateKey();
+            return getTasks().some(task => taskDateValue(task) === today && isTaskOverdue(task));
         }
 
         function navigationHasOpenConditionals() {
