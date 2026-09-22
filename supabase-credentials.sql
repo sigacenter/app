@@ -253,6 +253,7 @@ create table if not exists public.metas_semanais (
     semana_inicio date not null,
     semana_fim date not null,
     valor_total numeric(12,2) not null default 0,
+    feriados jsonb not null default '[]'::jsonb,
     distribuicao jsonb not null default '[]'::jsonb,
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
@@ -270,6 +271,8 @@ alter table public.metas_semanais
     add column if not exists semana_fim date;
 alter table public.metas_semanais
     add column if not exists valor_total numeric(12,2) default 0;
+alter table public.metas_semanais
+    add column if not exists feriados jsonb not null default '[]'::jsonb;
 alter table public.metas_semanais
     add column if not exists distribuicao jsonb default '[]'::jsonb;
 alter table public.metas_semanais
