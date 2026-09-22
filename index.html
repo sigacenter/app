@@ -3069,9 +3069,18 @@
 
         function renderGoalMarkers(goal) {
             const values = { bronze: Number(goal.bronze || 0), silver: Number(goal.silver || 0), gold: Number(goal.gold || 0), diamond: Number(goal.diamond || 0) };
-            const max = Math.max(1, values.diamond);
             const tiers = [['bronze', 'Bronze', 'tier-bronze'], ['silver', 'Prata', 'tier-silver'], ['gold', 'Ouro', 'tier-gold'], ['diamond', 'Diamante', 'tier-diamond']];
-            document.getElementById('goal-markers').innerHTML = tiers.filter(([key]) => values[key] > 0).map(([key, label, color]) => `<button type="button" data-goal-tier="${key}" class="absolute -translate-x-1/2 text-center" style="left:${Math.min(100, values[key] / max * 100)}%"><span class="mx-auto block h-2 w-0.5 bg-slate-300"></span><span class="mt-1 block whitespace-nowrap rounded-full px-1 text-[8px] font-black uppercase ${color} text-white">${label}</span></button>`).join('');
+            const activeTiers = tiers.filter(([key]) => values[key] > 0);
+            const activeValues = activeTiers.map(([key]) => values[key]);
+            const minimum = Math.min(...activeValues);
+            const maximum = Math.max(...activeValues);
+            const range = maximum - minimum;
+            const start = activeTiers.length === 1 ? 50 : 8;
+            const span = activeTiers.length === 1 ? 0 : 84;
+            document.getElementById('goal-markers').innerHTML = activeTiers.map(([key, label, color]) => {
+                const position = range ? start + ((values[key] - minimum) / range) * span : 50;
+                return `<button type="button" data-goal-tier="${key}" class="absolute -translate-x-1/2 text-center" style="left:${position}%"><span class="mx-auto block h-2 w-0.5 bg-slate-300"></span><span class="mt-1 block whitespace-nowrap rounded-full px-1 text-[8px] font-black uppercase ${color} text-white">${label}</span></button>`;
+            }).join('');
         }
 
         function formatGoalPeriodDate(period, start, end) {
