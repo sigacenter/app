@@ -1153,10 +1153,20 @@
             const storeIds = [...new Set(rows.map(row => row.loja_id).filter(Boolean))];
             if (storeIds.some(storeId => !isSupabaseUuid(storeId))) return new Error(`A loja vinculada a ${table} não possui um ID válido.`);
             if (storeIds.length) {
-                const stores = getLojas().filter(store => storeIds.includes(store.id));
-                if (stores.length !== storeIds.length) return new Error(`A loja vinculada a ${table} não foi encontrada neste dispositivo.`);
-                const { error } = await sigaSupabase.from('lojas').upsert(stores.map(store => ({ id: store.id, nome: store.name, slug: store.slug, configuracoes: store.configuracoes || {}, created_at: store.createdAt })));
-                             if (error) return error;
+                const localStores = getLojas().filter(store => storeIds.includes(store.id));
+                const missingStoreIds = storeIds.filter(storeId => !localStores.some(store => store.id === storeId));
+                let remoteStores = [];
+                if (missingStoreIds.length) {
+                    const { data, error } = await sigaSupabase.from('lojas').select('id,nome,slug,configuracoes,created_at').in('id', missingStoreIds);
+                    if (error) return error;
+                    remoteStores = (data || []).map(store => ({ ...store, name: store.nome, createdAt: store.created_at }));
+                    const missingRemoteIds = missingStoreIds.filter(storeId => !remoteStores.some(store => store.id === storeId));
+                    if (missingRemoteIds.length) return new Error(`A loja ${missingRemoteIds.join(', ')} não existe no Supabase.`);
+                    writeStoredList(lojasStorageKey, mergeStoredLists(getLojas(), remoteStores));
+                }
+                const stores = [...localStores, ...remoteStores];
+                const { error } = await sigaSupabase.from('lojas').upsert(stores.map(store => ({ id: store.id, nome: store.name || store.nome, slug: store.slug, configuracoes: store.configuracoes || {}, created_at: store.createdAt || store.created_at })));
+                if (error) return error;
             }
 
             if (table === 'perfis') return null;
