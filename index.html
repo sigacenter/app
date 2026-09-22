@@ -1216,7 +1216,19 @@
         let lastSupabaseHydration = 0;
 
         async function hydrateFromSupabase() {
-            const session = getSession();
+            let session = getSession();
+            if (session?.type === 'user' && isSupabaseUuid(session.userId)) {
+                const { data: currentProfile, error: profileError } = await sigaSupabase
+                    .from('perfis')
+                    .select('id,loja_id,nome,cargo,username,slug,full_slug,created_at')
+                    .eq('id', session.userId)
+                    .maybeSingle();
+                if (!profileError && currentProfile?.loja_id && currentProfile.loja_id !== session.lojaId) {
+                    session = { ...session, lojaId: currentProfile.loja_id, name: currentProfile.nome || session.name, role: normalizeUserRole(currentProfile.cargo || session.role) };
+                    saveSession(session);
+                    if (typeof renderManagerBar === 'function') renderManagerBar();
+                }
+            }
             const requests = [];
             const addRequest = (table, storageKey, column, value) => requests.push({ table, storageKey, column, value });
             if (!session) {
