@@ -2872,14 +2872,15 @@
             const users = getUsuarios().filter(item => item.lojaId === session?.lojaId && item.role === 'vendedor');
             const form = document.getElementById('weekly-goal-form');
             const editing = getWeeklyGoals().find(item => item.id === form.dataset.editingId);
-            const saved = new Map((editing?.distributions || []).map(item => [item.userId, item]));
+            const saved = new Map((editing?.distributions || []).map(item => [String(goalEntryUserId(item) || '').trim(), item]));
             document.getElementById('weekly-goal-vendors').innerHTML = users.map(user => {
-                const values = saved.get(user.id) || {};
+                const targetId = String(user.id).trim();
+                const values = saved.get(targetId) || {};
                 const tierInputs = [
                     ['bronze', 'Bronze', values.bronze || ''],
                     ['silver', 'Prata', values.silver || ''],
                     ['gold', 'Ouro', values.gold || ''],
-                    ['diamond', 'Diamante', values.diamond || '']
+                    ['diamond', 'Diamante', values.diamond || values.value || '']
                 ];
                 return `<label class="rounded-xl border border-slate-100 bg-slate-50 p-2 text-[10px] font-bold text-slate-600"><div class="mb-2 flex items-center justify-between gap-2"><span class="min-w-0 flex-1 truncate">${escapeHtml(user.name)}</span><span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[8px] font-black uppercase text-indigo-600">Meta</span></div><div class="grid grid-cols-2 gap-2 sm:grid-cols-4">${tierInputs.map(([tier, label, value]) => `<div class="flex flex-col"><span class="mb-1 text-[8px] font-black uppercase tracking-wider text-slate-400">${label}</span><input type="text" inputmode="decimal" data-decimal-input data-weekly-tier="${tier}" data-weekly-vendor="${user.id}" value="${value}" class="w-full rounded-lg border border-slate-200 px-2 py-1 text-right outline-none" placeholder="0"></div>`).join('')}</div></label>`;
             }).join('');
@@ -2904,14 +2905,15 @@
             const lojaId = session?.lojaId;
             const goalSection = document.getElementById('store-goal-summary-section');
             if (!goalSection || !lojaId) return;
-            const goals = getWeeklyGoals().filter(goal => goal.lojaId === lojaId).sort((first, second) => first.weekStart.localeCompare(second.weekStart));
+            const goals = getWeeklyGoals().filter(goal => String(goal.lojaId) === String(lojaId)).sort((first, second) => first.weekStart.localeCompare(second.weekStart));
             const today = getLocalDateKey();
             const activeGoal = goals.find(goal => today >= goal.weekStart && today <= goal.weekEnd) || goals.filter(goal => goal.weekStart <= today).at(-1) || goals[0] || null;
             const totals = { bronze: 0, silver: 0, gold: 0, diamond: 0 };
             if (activeGoal) {
                 const users = getUsuarios().filter(item => item.lojaId === lojaId && item.role === 'vendedor');
                 users.forEach(user => {
-                    const distribution = (activeGoal.distributions || []).find(item => item.userId === user.id) || {};
+                    const targetUserId = String(user.id).trim();
+                    const distribution = (activeGoal.distributions || []).find(item => String(goalEntryUserId(item) || item.userId || '').trim() === targetUserId) || {};
                     totals.bronze += Number(distribution.bronze || 0);
                     totals.silver += Number(distribution.silver || 0);
                     totals.gold += Number(distribution.gold || 0);
@@ -2957,11 +2959,8 @@
         }
 
         function goalForCurrentUser() {
-            const session = getSession();
-            const userId = effectiveUserId();
             const today = getLocalDateKey();
-            const normalizedUserId = userId ? String(userId) : null;
-            const weeklyGoals = getWeeklyGoals().filter(goal => goal.lojaId === session?.lojaId && goal.distributions?.some(item => String(goalEntryUserId(item) || item.userId || '').trim() === normalizedUserId)).sort((first, second) => (first.weekStart || '').localeCompare(second.weekStart || ''));
+            const weeklyGoals = weeklyGoalsForCurrentUser();
             const activeWeekly = resolveActiveWeeklyGoal(weeklyGoals, today);
             return { weekly: activeWeekly || weeklyGoals[0] || null, monthly: null };
         }
@@ -2986,8 +2985,15 @@
 
         function configuredGoalValues(period, weekly, monthly, target, weekDays) {
             const userId = effectiveUserId();
-            const userDistribution = (weekly?.distributions || []).find(item => item.userId === userId) || {};
-            const legacy = readStoredList('siga-metas').find(item => item.lojaId === getSession()?.lojaId && item.userId === userId && item.weekStart === weekly.weekStart);
+            const targetUserId = String(userId || '').trim();
+            const userDistribution = (weekly?.distributions || []).find(item => {
+                return String(goalEntryUserId(item) || item.userId || '').trim() === targetUserId;
+            }) || {};
+            const legacy = readStoredList('siga-metas').find(item => {
+                return String(item.lojaId) === String(getSession()?.lojaId) &&
+                    String(item.userId || '').trim() === targetUserId &&
+                    item.weekStart === weekly?.weekStart;
+            });
             const weeklySource = weekly?.bronze || weekly?.silver || weekly?.gold || weekly?.diamond ? weekly : legacy;
             const monthlySource = monthly?.bronze || monthly?.silver || monthly?.gold || monthly?.diamond ? monthly : legacy;
             const source = period === 'mes' ? monthlySource : weeklySource;
@@ -3006,7 +3012,7 @@
                 gold: readLevel('gold') / divisor,
                 diamond: readLevel('diamond') / divisor
             };
-            if (!values.diamond) values.diamond = Number(userDistribution.value || target || 0);
+            if (!values.diamond) values.diamond = Number(userDistribution.value || userDistribution.diamond || target || 0);
             if (!values.bronze && !values.silver && !values.gold) {
                 values.bronze = values.diamond * 0.25;
                 values.silver = values.diamond * 0.5;
@@ -3038,11 +3044,15 @@
             const today = getLocalDateKey();
             const weekly = goal.weekly || { total: 0, weekStart: today, weekEnd: today, distributions: [] };
             const userId = effectiveUserId();
-            const userDistribution = weekly.distributions.find(item => String(goalEntryUserId(item) || item.userId || '').trim() === String(userId || '')) || { value: 0, percentage: 0 };
+            const targetUserId = String(userId || '').trim();
+            const userDistribution = (weekly.distributions || []).find(item => {
+                const itemId = String(goalEntryUserId(item) || item.userId || '').trim();
+                return itemId === targetUserId;
+            }) || { value: 0, percentage: 0 };
             const sales = getSales();
             const period = (window.activeGoalPeriod || 'semana');
             const businessDays = countBusinessDays(weekly.weekStart, weekly.weekEnd);
-            const weekTarget = Number(userDistribution.value || 0);
+            const weekTarget = Number(userDistribution.value || userDistribution.diamond || 0);
             const dailyTarget = businessDays ? weekTarget / businessDays : weekTarget;
             const start = period === 'dia' ? today : weekly.weekStart;
             const end = period === 'dia' ? today : weekly.weekEnd;
