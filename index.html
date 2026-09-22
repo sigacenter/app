@@ -3180,7 +3180,8 @@
         function renderGoalCard() {
             const data = currentGoalData();
             const goal = data.goal;
-            const target = Number(goal.diamond || data.target || 0);
+            const configuredTarget = Number(goal.diamond || data.target || 0);
+            const target = data.period === 'dia' ? Number(data.dailyMetrics.adjustedDaily || configuredTarget) : configuredTarget;
             const percent = goalProgressPercent(data.total, goal);
             const period = data.period || 'semana';
             const label = period === 'dia' ? 'Meta Diária' : 'Meta Semanal';
