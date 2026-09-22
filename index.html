@@ -2222,6 +2222,7 @@
                 if (!distributions.length) { feedback.textContent = 'Defina pelo menos um valor de meta para um vendedor.'; return; }
                 if (invalidDistribution) { feedback.textContent = 'As metas por faixa devem seguir a ordem Bronze ≤ Prata ≤ Ouro ≤ Diamante.'; return; }
                 const total = distributions.reduce((sum, item) => sum + Number(item.value || 0), 0);
+                if (!Number.isFinite(total) || total <= 0) { feedback.textContent = 'O valor total da meta precisa ser maior que zero.'; return; }
                 const weeklyGoals = getWeeklyGoals();
                 const existing = weeklyGoals.find(item => item.id === document.getElementById('weekly-goal-form').dataset.editingId);
                 try {
@@ -2833,12 +2834,20 @@
                 const currentMonthlyIds = normalizedList.map(item => item.metaMensalId).filter(isSupabaseUuid);
                 const removedMonthlyIds = previousMonthlyIds.filter(id => !currentMonthlyIds.includes(id));
                 if (normalizedList.length) {
-                    const monthlyRows = [...new Map(normalizedList.map(item => [item.metaMensalId, {
-                        id: item.metaMensalId,
-                        loja_id: item.lojaId,
-                        mes_referencia: `${item.weekStart?.slice(0, 7) || new Date().toISOString().slice(0, 7)}-01`,
-                        valor_total: Number(item.total || 0)
-                    }])).values()];
+                    const monthlyRowsById = new Map();
+                    normalizedList.forEach(item => {
+                        const monthlyId = item.metaMensalId;
+                        const monthlyRow = monthlyRowsById.get(monthlyId) || {
+                            id: monthlyId,
+                            loja_id: item.lojaId,
+                            mes_referencia: `${item.weekStart?.slice(0, 7) || new Date().toISOString().slice(0, 7)}-01`,
+                            valor_total: 0
+                        };
+                        monthlyRow.valor_total += Math.max(0, Number(item.total || 0));
+                        monthlyRowsById.set(monthlyId, monthlyRow);
+                    });
+                    const monthlyRows = [...monthlyRowsById.values()].filter(item => item.valor_total > 0);
+                    if (monthlyRows.length !== monthlyRowsById.size) throw new Error('Existe uma meta mensal com valor total igual a zero.');
                     const { error: monthlyError } = await sigaSupabase.from('metas_mensais').upsert(monthlyRows, { onConflict: 'id' });
                     if (monthlyError) throw monthlyError;
                     const weeklyRows = normalizedList.map(item => databaseRowFromApp('metas_semanais', item));
