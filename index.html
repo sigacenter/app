@@ -2065,7 +2065,7 @@
                 const current = readStoredList(key);
                 const existingTasks = current.filter(task => task.prospectingListId === list.id);
                 const existing = new Set(existingTasks.map(task => task.date));
-                const tasks = dates.filter(date => !existing.has(date)).map(date => ({ id: crypto.randomUUID(), title: `Prospecção: ${list.name}`, time: list.taskTime, owner: 'manager', completed: false, observation: '', date, prospectingListId: list.id, prospectingTargetMode: list.taskTargetMode || 'minimum', prospectingTarget: list.taskTargetMode === 'total' ? 'all' : Number(list.taskTarget || 1) }));
+                const tasks = dates.filter(date => !existing.has(date)).map(date => ({ id: crypto.randomUUID(), title: `Prospecção: ${list.name}`, time: list.taskTime, owner: 'manager', userId, ownerId: userId, vendedorId: userId, responsavel_id: userId, vendorId: userId, completed: false, observation: '', date, prospectingListId: list.id, prospectingTargetMode: list.taskTargetMode || 'minimum', prospectingTarget: list.taskTargetMode === 'total' ? 'all' : Number(list.taskTarget || 1) }));
                 const updated = current.map(task => task.prospectingListId === list.id && task.date >= getLocalDateKey() ? { ...task, title: `Prospecção: ${list.name}`, time: list.taskTime, prospectingTargetMode: list.taskTargetMode || 'minimum', prospectingTarget: list.taskTargetMode === 'total' ? 'all' : Number(list.taskTarget || 1) } : task);
                 if (tasks.length) updated.push(...tasks);
                 localStorage.setItem(key, JSON.stringify(updated));
@@ -3555,7 +3555,10 @@
                 if (userId) {
                     const assignedByManager = Object.keys(localStorage)
                         .filter(key => key.startsWith('siga-tarefas::'))
-                        .flatMap(key => readStoredList(key).map(task => normalizeTaskAssignment(task, userId)))
+                        .flatMap(key => {
+                            const scopedUserId = key.slice('siga-tarefas::'.length).trim() || null;
+                            return readStoredList(key).map(task => normalizeTaskAssignment(task, scopedUserId));
+                        })
                         .filter(task => taskBelongsToUser(task, userId));
                     savedTasks = mergeStoredLists(savedTasks, assignedByManager);
                 }
