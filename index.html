@@ -554,7 +554,7 @@
     <!-- TELA DE PROSPECCAO -->
     <section id="prospecting-page" class="hidden max-w-5xl mx-auto p-4 space-y-6">
         <div class="flex items-center gap-3"><button type="button" data-back-dashboard aria-label="Voltar ao início" class="hidden h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 md:flex"><i data-lucide="arrow-left" class="h-4 w-4"></i></button><div><h2 class="text-2xl font-black text-slate-800">Prospecção</h2><p class="mt-1 text-xs font-medium text-slate-500">Fale com seus contatos usando mensagens prontas.</p></div></div>
-        <section class="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-sm"><div class="grid gap-3 md:grid-cols-3"><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Data<input id="prospecting-date" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Lista de contatos<select id="prospecting-list-select" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"></select></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Mensagem pronta<select id="prospecting-message-select" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"></select></label></div><p id="prospecting-availability" class="mt-3 rounded-xl bg-sky-50 px-3 py-2 text-[10px] font-bold text-sky-700"></p><div class="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Texto da mensagem</p><p id="prospecting-message-preview" class="mt-2 whitespace-pre-line text-xs leading-relaxed text-slate-600"></p></div></section>
+        <section class="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-sm"><div class="grid gap-3 md:grid-cols-3"><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Data<input id="prospecting-date" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Listas de contatos<select id="prospecting-list-select" multiple size="3" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"></select></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Mensagens prontas<select id="prospecting-message-select" multiple size="3" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none"></select></label></div><p id="prospecting-availability" class="mt-3 rounded-xl bg-sky-50 px-3 py-2 text-[10px] font-bold text-sky-700"></p><div class="mt-3 rounded-xl border border-slate-100 bg-slate-50 p-3"><p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Texto da mensagem</p><p id="prospecting-message-preview" class="mt-2 whitespace-pre-line text-xs leading-relaxed text-slate-600"></p><p class="mt-2 text-[10px] text-slate-400">Ao enviar, uma mensagem selecionada será escolhida aleatoriamente.</p></div></section>
         <div id="prospecting-contacts" class="space-y-2"></div>
         <section class="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm"><div class="flex items-center justify-between gap-3"><h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Meus conteúdos</h3><span class="text-[10px] font-bold text-slate-400">Somente você pode editar</span></div><div id="prospecting-personal-library" class="mt-3 grid gap-2 md:grid-cols-2"></div></section>
     </section>
@@ -572,7 +572,7 @@
             </div>
             <div class="flex gap-2 border-b border-slate-100 p-4"><button type="button" id="prospecting-create-list-tab" class="flex-1 rounded-xl bg-sky-50 px-3 py-2.5 text-xs font-black text-sky-700">Lista de contatos</button><button type="button" id="prospecting-create-message-tab" class="flex-1 rounded-xl px-3 py-2.5 text-xs font-black text-slate-400">Mensagem pronta</button></div>
             <div id="prospecting-personal-list-panel" class="p-5"><form id="prospecting-personal-list-form" class="grid gap-3 md:grid-cols-2"><input type="hidden" id="prospecting-personal-list-editing-id"><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Nome da lista<input id="prospecting-personal-list-name" required maxlength="80" placeholder="Ex.: Aniversários" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none"></label><div><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Dias disponíveis</label><div id="prospecting-personal-days" class="mt-1 grid grid-cols-4 gap-1"></div><label class="mt-2 flex items-center gap-2 text-[10px] font-bold text-slate-500"><input id="prospecting-personal-all-days" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-sky-600"> Todos os dias</label><div class="mt-2 flex gap-2"><input id="prospecting-personal-date" type="date" class="min-w-0 flex-1 rounded-xl border border-slate-200 px-2 py-2 text-xs font-bold"><button type="button" id="prospecting-personal-add-date" class="rounded-xl bg-slate-100 px-3 py-2 text-[10px] font-black text-slate-600">Adicionar</button></div><div id="prospecting-personal-selected-dates" class="mt-2 flex flex-wrap gap-1"></div></div><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Nomes, um por linha<textarea id="prospecting-personal-names" required rows="6" placeholder="Ana Silva&#10;Bruno Souza" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">WhatsApps, na mesma ordem<textarea id="prospecting-personal-phones" required rows="6" placeholder="5511999999999&#10;5511988888888" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><div class="flex justify-end gap-2 md:col-span-2"><button type="button" id="cancel-prospecting-personal-list" class="rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500">Cancelar</button><button type="submit" class="rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-black text-white">Salvar lista</button></div></form></div>
-            <div id="prospecting-personal-message-panel" class="hidden p-5"><form id="prospecting-personal-message-form" class="space-y-3"><input type="hidden" id="prospecting-personal-message-editing-id"><label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Título<input id="prospecting-personal-message-title" required maxlength="80" placeholder="Mensagem de aniversário" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></label><label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Texto da mensagem<textarea id="prospecting-personal-message-body" required maxlength="1200" rows="6" placeholder="Olá, {{nome}}! Tudo bem?" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><div class="rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-[10px] leading-relaxed text-indigo-800"><div class="flex items-center justify-between gap-2"><strong>Como usar a mensagem</strong><button type="button" id="prospecting-help-button" aria-label="Explicar mensagem pronta" class="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm"><i data-lucide="help-circle" class="h-4 w-4"></i></button></div><div id="prospecting-help-card" class="mt-2 hidden">Use <strong>{{nome}}</strong> para inserir automaticamente o nome do cliente. No WhatsApp, use <strong>*texto*</strong> para negrito, <strong>_texto_</strong> para itálico e <strong>~texto~</strong> para riscado.</div></div><div class="flex justify-end gap-2"><button type="button" id="cancel-prospecting-personal-message" class="rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500">Cancelar</button><button type="submit" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white">Salvar mensagem</button></div></form></div>
+            <div id="prospecting-personal-message-panel" class="hidden p-5"><form id="prospecting-personal-message-form" class="space-y-3"><input type="hidden" id="prospecting-personal-message-editing-id"><label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Título<input id="prospecting-personal-message-title" required maxlength="80" placeholder="Mensagem de aniversário" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></label><label class="block text-[10px] font-black uppercase tracking-wider text-slate-400">Texto da mensagem<textarea id="prospecting-personal-message-body" required maxlength="1200" rows="6" placeholder="Olá, {{nome}}! Sou {{vendedor}} da nossa loja." class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><div class="rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-[10px] leading-relaxed text-indigo-800"><div class="flex items-center justify-between gap-2"><strong>Como usar a mensagem</strong><button type="button" id="prospecting-help-button" aria-label="Explicar mensagem pronta" class="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-sm"><i data-lucide="help-circle" class="h-4 w-4"></i></button></div><div id="prospecting-help-card" class="mt-2 hidden">Use <strong>{{nome}}</strong> para o nome do cliente e <strong>{{vendedor}}</strong> ou <strong>{{vendedor_nome}}</strong> para o nome do vendedor. Exemplo: Olá, {{nome}}! Sou {{vendedor}}. No WhatsApp, use <strong>*texto*</strong> para negrito, <strong>_texto_</strong> para itálico e <strong>~texto~</strong> para riscado.</div></div><div class="flex justify-end gap-2"><button type="button" id="cancel-prospecting-personal-message" class="rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500">Cancelar</button><button type="submit" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white">Salvar mensagem</button></div></form></div>
         </div>
     </div>
 
@@ -664,6 +664,7 @@
             <form id="manager-task-form" class="mt-3 grid gap-3 md:grid-cols-4">
                 <input id="manager-task-title" required maxlength="120" placeholder="Nome da tarefa" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none md:col-span-2">
                 <input id="manager-task-time" required type="time" value="10:00" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none">
+                <input id="manager-task-start-date" required type="date" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold outline-none">
                 <div class="rounded-xl border border-slate-200 p-3 md:col-span-4"><p class="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Repetir toda semana em</p><div id="manager-task-weekdays" class="grid grid-cols-7 gap-1.5 sm:gap-2"></div><label class="mt-3 block text-[10px] font-black uppercase tracking-wider text-slate-400">Finaliza em<input id="manager-task-repeat-end" type="date" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none"></label></div>
                 <div class="rounded-xl border border-slate-200 p-3 md:col-span-3"><p class="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">Vendedores selecionados</p><div id="manager-task-vendors" class="grid gap-2 sm:grid-cols-3"></div></div>
                 <button type="submit" class="rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-black text-white hover:bg-amber-600">Lançar tarefas</button>
@@ -764,7 +765,7 @@
     <section id="manager-prospecting-page" class="hidden max-w-5xl mx-auto p-4 space-y-6">
         <div class="flex items-center gap-3"><button type="button" data-back-dashboard aria-label="Voltar" class="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600"><i data-lucide="arrow-left" class="h-4 w-4"></i></button><div><h2 class="text-2xl font-black text-slate-800">Prospecção da equipe</h2><p class="mt-1 text-xs font-medium text-slate-500">Crie listas, distribua contatos e prepare mensagens para o WhatsApp.</p></div></div>
         <section class="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-sm"><form id="prospecting-list-form" class="grid gap-3 md:grid-cols-2"><input type="hidden" id="prospecting-editing-id"><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Nome da lista<input id="prospecting-list-name" required maxlength="80" placeholder="Ex.: Aniversários" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium outline-none"></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Dias disponíveis<select id="prospecting-list-days" multiple class="mt-1 h-28 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold outline-none"><option value="0">Domingo</option><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option></select></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Nomes, um por linha<textarea id="prospecting-names" required rows="7" placeholder="Ana Silva&#10;Bruno Souza&#10;Carla Lima" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">WhatsApps, na mesma ordem<textarea id="prospecting-phones" required rows="7" placeholder="5511999999999&#10;5511988888888&#10;5511977777777" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><div class="flex justify-end gap-2 md:col-span-2"><button type="button" id="prospecting-cancel-edit" class="hidden rounded-xl px-4 py-2.5 text-xs font-bold text-slate-500">Cancelar</button><button type="submit" class="rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-black text-white">Salvar lista</button></div></form><p class="mt-2 text-[10px] text-slate-400">Deixe todos os dias selecionados para aparecer diariamente. O número pode conter DDI, DDD e apenas números.</p></section>
-        <section class="rounded-[2rem] border border-indigo-100 bg-white p-5 shadow-sm"><form id="prospecting-message-form" class="grid gap-3 md:grid-cols-[1fr_2fr_auto]"><input type="hidden" id="prospecting-message-editing-id"><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Título<input id="prospecting-message-title" required maxlength="80" placeholder="Mensagem de aniversário" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Texto da mensagem<textarea id="prospecting-message-body" required maxlength="1200" rows="3" placeholder="Olá, {{nome}}! Tudo bem?" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><div class="flex items-end"><button type="submit" class="w-full rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white">Salvar mensagem</button></div></form><p class="mt-2 text-[10px] text-slate-400">Use <strong>{{nome}}</strong> para inserir o nome do cliente. A formatação do WhatsApp, como *negrito* e ~riscado~, será preservada.</p><div id="prospecting-message-list" class="mt-5 grid gap-2 md:grid-cols-2"></div></section>
+        <section class="rounded-[2rem] border border-indigo-100 bg-white p-5 shadow-sm"><form id="prospecting-message-form" class="grid gap-3 md:grid-cols-[1fr_2fr_auto]"><input type="hidden" id="prospecting-message-editing-id"><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Título<input id="prospecting-message-title" required maxlength="80" placeholder="Mensagem de aniversário" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></label><label class="text-[10px] font-black uppercase tracking-wider text-slate-400">Texto da mensagem<textarea id="prospecting-message-body" required maxlength="1200" rows="3" placeholder="Olá, {{nome}}! Sou {{vendedor}}." class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"></textarea></label><div class="flex items-end"><button type="submit" class="w-full rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white">Salvar mensagem</button></div></form><p class="mt-2 text-[10px] text-slate-400">Tags: <strong>{{nome}}</strong> = cliente; <strong>{{vendedor}}</strong> ou <strong>{{vendedor_nome}}</strong> = vendedor. Use *negrito*, _itálico_ e ~riscado~ no WhatsApp. As mensagens selecionadas podem ser sorteadas no envio.</p><div id="prospecting-message-list" class="mt-5 grid gap-2 md:grid-cols-2"></div></section>
         <section class="rounded-[2rem] border border-amber-100 bg-amber-50 p-5 shadow-sm"><h3 class="text-sm font-black uppercase tracking-wider text-amber-800">Tarefas automáticas da lista</h3><p class="mt-1 text-[10px] text-amber-700">Defina quando os vendedores devem trabalhar esta lista e quantos contatos precisam concluir por dia.</p><div class="mt-3 grid gap-3 md:grid-cols-3"><label class="text-[10px] font-black uppercase tracking-wider text-amber-700">Horário<input id="prospecting-task-time" type="time" value="10:00" class="mt-1 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm font-bold outline-none"></label><label class="text-[10px] font-black uppercase tracking-wider text-amber-700">Tipo de meta<select id="prospecting-task-target-mode" class="mt-1 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm font-bold outline-none"><option value="minimum">Mínimo de contatos</option><option value="total">Todos os contatos atribuídos</option></select></label><label class="text-[10px] font-black uppercase tracking-wider text-amber-700">Quantidade mínima<input id="prospecting-task-target" type="number" min="1" step="1" value="1" class="mt-1 w-full rounded-xl border border-amber-200 bg-white px-3 py-2.5 text-sm font-bold outline-none"></label></div><div class="mt-3"><p class="mb-2 text-[10px] font-black uppercase tracking-wider text-amber-700">Vendedores responsáveis</p><div id="prospecting-task-vendors" class="grid gap-2 sm:grid-cols-2"></div></div></section>
         <div id="manager-prospecting-list" class="space-y-2"></div>
     </section>
@@ -1972,20 +1973,24 @@
             const messageSelect = document.getElementById('prospecting-message-select');
             if (!listSelect || !messageSelect) return;
             const lists = getProspectingLists().filter(list => !list.isMessageLibrary && prospectingListAvailable(list, new Date(`${prospectingSelectedDate}T12:00:00`)));
-            const previousList = listSelect.value;
+            const previousLists = [...listSelect.selectedOptions].map(option => option.value);
             listSelect.innerHTML = lists.length ? lists.map(list => `<option value="${list.id}">${escapeHtml(list.name)}</option>`).join('') : '<option value="">Nenhuma lista disponível hoje</option>';
-            listSelect.value = lists.some(list => list.id === previousList) ? previousList : lists[0]?.id || '';
+            const selectedListIds = previousLists.filter(id => lists.some(list => list.id === id));
+            (selectedListIds.length ? selectedListIds : lists.slice(0, 1).map(list => list.id)).forEach(id => { const option = [...listSelect.options].find(item => item.value === id); if (option) option.selected = true; });
             const messages = getProspectingMessages();
-            const previousMessage = messageSelect.value;
+            const previousMessages = [...messageSelect.selectedOptions].map(option => option.value);
             messageSelect.innerHTML = messages.length ? messages.map(message => `<option value="${message.id}">${escapeHtml(message.title)}</option>`).join('') : '<option value="">Nenhuma mensagem cadastrada</option>';
-            messageSelect.value = messages.some(message => message.id === previousMessage) ? previousMessage : messages[0]?.id || '';
-            const list = lists.find(item => item.id === listSelect.value);
-            const selectedMessage = messages.find(item => item.id === messageSelect.value);
+            const selectedMessageIds = previousMessages.filter(id => messages.some(message => message.id === id));
+            (selectedMessageIds.length ? selectedMessageIds : messages.map(message => message.id)).forEach(id => { const option = [...messageSelect.options].find(item => item.value === id); if (option) option.selected = true; });
+            const selectedLists = lists.filter(item => selectedListIds.length ? selectedListIds.includes(item.id) : item.id === lists[0]?.id);
+            const selectedMessages = messages.filter(item => (selectedMessageIds.length ? selectedMessageIds : messages.map(message => message.id)).includes(item.id));
             document.getElementById('prospecting-date').value = prospectingSelectedDate;
-            document.getElementById('prospecting-availability').textContent = list ? `${assignedProspectingContacts(list).length} contato(s) atribuídos a você nesta lista.` : 'Nenhuma lista disponível para hoje.';
-            document.getElementById('prospecting-message-preview').textContent = selectedMessage?.body || 'Nenhuma mensagem selecionada.';
-            const contacts = list ? assignedProspectingContacts(list, prospectingSelectedDate).sort((first, second) => Number(first.sent) - Number(second.sent) || first.name.localeCompare(second.name, 'pt-BR')) : [];
-            document.getElementById('prospecting-contacts').innerHTML = contacts.length ? contacts.map(contact => `<article class="flex flex-col gap-3 rounded-2xl border ${contact.sent ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-white'} p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div class="min-w-0"><p class="truncate text-sm font-black text-slate-800">${escapeHtml(contact.name)}</p><p class="mt-1 text-xs font-semibold text-slate-400">${escapeHtml(contact.phone)}</p></div><button type="button" data-send-prospecting="${contact.id}" class="flex shrink-0 items-center justify-center gap-2 rounded-xl ${contact.sent ? 'bg-emerald-500' : 'bg-green-600'} px-4 py-2.5 text-xs font-black text-white hover:brightness-105"><i data-lucide="${contact.sent ? 'check' : 'message-circle'}" class="h-4 w-4"></i>${contact.sent ? 'Mensagem enviada' : 'Enviar no WhatsApp'}</button></article>`).join('') : '<p class="rounded-2xl bg-white p-5 text-xs text-slate-400">Nenhum contato atribuído para esta lista.</p>';
+            document.getElementById('prospecting-availability').textContent = selectedLists.length ? `${selectedLists.reduce((total, list) => total + assignedProspectingContacts(list).length, 0)} contato(s) nas listas selecionadas.` : 'Nenhuma lista disponível para hoje.';
+            const previewMessage = selectedMessages[0];
+            const sellerName = getUsuarios().find(user => user.id === effectiveUserId())?.name || getSession()?.name || 'Vendedor';
+            document.getElementById('prospecting-message-preview').textContent = previewMessage ? previewMessage.body.replace(/\{\{\s*nome\s*\}\}/gi, 'Nome do cliente').replace(/\{\{\s*(?:vendedor|vendedor_nome)\s*\}\}/gi, sellerName) : 'Nenhuma mensagem selecionada.';
+            const contacts = [...new Map(selectedLists.flatMap(list => assignedProspectingContacts(list, prospectingSelectedDate).map(contact => [`${list.id}:${contact.id}`, { ...contact, sourceListId: list.id }]))).values()].sort((first, second) => Number(first.sent) - Number(second.sent) || first.name.localeCompare(second.name, 'pt-BR'));
+            document.getElementById('prospecting-contacts').innerHTML = contacts.length ? contacts.map(contact => `<article class="flex flex-col gap-3 rounded-2xl border ${contact.sent ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100 bg-white'} p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"><div class="min-w-0"><p class="truncate text-sm font-black text-slate-800">${escapeHtml(contact.name)}</p><p class="mt-1 text-xs font-semibold text-slate-400">${escapeHtml(contact.phone)}</p></div><button type="button" data-send-prospecting="${contact.id}" data-send-list="${contact.sourceListId}" class="flex shrink-0 items-center justify-center gap-2 rounded-xl ${contact.sent ? 'bg-emerald-500' : 'bg-green-600'} px-4 py-2.5 text-xs font-black text-white hover:brightness-105"><i data-lucide="${contact.sent ? 'check' : 'message-circle'}" class="h-4 w-4"></i>${contact.sent ? 'Mensagem enviada' : 'Enviar no WhatsApp'}</button></article>`).join('') : '<p class="rounded-2xl bg-white p-5 text-xs text-slate-400">Nenhum contato atribuído para as listas selecionadas.</p>';
             renderPersonalProspectingLibrary();
             lucide.createIcons();
             updateNavigationNotifications();
@@ -2061,15 +2066,20 @@
             document.getElementById('prospecting-personal-selected-dates').innerHTML = [...personalProspectingSelectedDates].sort().map(date => `<button type="button" data-remove-personal-date="${date}" class="rounded-full bg-sky-50 px-2 py-1 text-[9px] font-bold text-sky-700">${date.split('-').reverse().join('/')} ×</button>`).join('');
         }
 
-        function sendProspectingMessage(contactId) {
+        function sendProspectingMessage(contactId, sourceListId) {
             const listSelect = document.getElementById('prospecting-list-select');
-            const message = getProspectingMessages().find(item => item.id === document.getElementById('prospecting-message-select').value);
+            const selectedListIds = [...listSelect.selectedOptions].map(option => option.value);
+            const messageSelect = document.getElementById('prospecting-message-select');
+            const selectedMessageIds = [...messageSelect.selectedOptions].map(option => option.value);
+            const messageOptions = getProspectingMessages().filter(item => selectedMessageIds.includes(item.id));
             const lists = readStoredList(prospectingStorageKey);
-            const list = lists.find(item => item.id === listSelect.value);
+            const list = lists.find(item => item.id === sourceListId) || lists.find(item => selectedListIds.includes(item.id));
             const contact = list?.contacts?.find(item => item.id === contactId);
             const userId = effectiveUserId();
-            if (!list || !contact || !message || !userId) return showToast('Selecione uma lista e uma mensagem antes de enviar.', 'error');
-            const body = message.body.replace(/\{\{\s*nome\s*\}\}/gi, contact.name);
+            const message = messageOptions[Math.floor(Math.random() * messageOptions.length)];
+            if (!list || !contact || !message || !userId) return showToast('Selecione pelo menos uma lista e uma mensagem antes de enviar.', 'error');
+            const sellerName = getUsuarios().find(user => user.id === userId)?.name || getSession()?.name || 'Vendedor';
+            const body = message.body.replace(/\{\{\s*nome\s*\}\}/gi, contact.name).replace(/\{\{\s*(?:vendedor|vendedor_nome)\s*\}\}/gi, sellerName);
             const phone = formatProspectingPhone(contact.phone);
             window.open(`https://wa.me/${phone}?text=${encodeURIComponent(body)}`, '_blank', 'noopener');
             const dateKey = prospectingSelectedDate || getLocalDateKey();
@@ -2205,14 +2215,15 @@
                 event.preventDefault();
                 const title = document.getElementById('manager-task-title').value.trim();
                 const time = document.getElementById('manager-task-time').value;
+                const startDate = document.getElementById('manager-task-start-date').value || getLocalDateKey();
                 const repeatDays = Array.from(document.querySelectorAll('[data-manager-task-weekday]:checked')).map(input => Number(input.value));
                 const repeatEndDate = document.getElementById('manager-task-repeat-end').value;
                 const selectedVendors = Array.from(document.querySelectorAll('[data-manager-task-vendor]:checked')).map(input => input.value);
                 if (!repeatDays.length) { document.getElementById('manager-task-feedback').textContent = 'Selecione pelo menos um dia da semana.'; return; }
                 if (!selectedVendors.length) { document.getElementById('manager-task-feedback').textContent = 'Selecione pelo menos um vendedor.'; return; }
-                selectedVendors.forEach(userId => createManagerRecurringTasks(userId, title, time, repeatDays, repeatEndDate));
+                selectedVendors.forEach(userId => createManagerRecurringTasks(userId, title, time, repeatDays, repeatEndDate, startDate));
                 document.getElementById('manager-task-feedback').textContent = `Tarefa lançada para ${selectedVendors.length} vendedor${selectedVendors.length === 1 ? '' : 'es'}.`;
-                event.target.reset(); document.getElementById('manager-task-repeat-end').value = ''; renderManagerTaskWeekdays(); renderManagerTaskVendors(); renderManagerOverview();
+                event.target.reset(); document.getElementById('manager-task-repeat-end').value = ''; document.getElementById('manager-task-start-date').value = getLocalDateKey(); renderManagerTaskWeekdays(); renderManagerTaskVendors(); renderManagerOverview();
             });
             document.getElementById('weekly-goal-form').addEventListener('submit', async event => {
                 event.preventDefault();
@@ -2497,13 +2508,12 @@
             };
         }
 
-        function createManagerRecurringTasks(userId, title, time, repeatDays, repeatEndDate = '') {
+        function createManagerRecurringTasks(userId, title, time, repeatDays, repeatEndDate = '', startDate = getLocalDateKey()) {
             const targetUserId = String(userId).trim();
             const key = `siga-tarefas::${targetUserId}`;
             const current = readStoredList(key).map(task => normalizeTaskAssignment(task, targetUserId));
-            const todayKey = getLocalDateKey();
-            const existingDates = buildRecurringTaskDateSet(current, title, time, todayKey, repeatEndDate || null);
-            const tasks = createRecurringTasks(title, time, todayKey, repeatDays, {
+            const existingDates = buildRecurringTaskDateSet(current, title, time, startDate, repeatEndDate || null);
+            const tasks = createRecurringTasks(title, time, startDate, repeatDays, {
                 existingDates,
                 owner: 'manager',
                 userId: targetUserId,
@@ -2519,6 +2529,8 @@
         function renderManagerOverview() {
             const session = getSession();
             configureManagerMobilePanels();
+            const startDateInput = document.getElementById('manager-task-start-date');
+            if (startDateInput && !startDateInput.value) startDateInput.value = getLocalDateKey();
             renderManagerTaskWeekdays();
             renderManagerTaskVendors();
             renderManagerOverviewDateNav();
@@ -3847,10 +3859,7 @@
             const endDate = options.endDate || null;
             const tasks = [];
             const start = new Date(`${startDate}T12:00:00`);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (start < today) start.setTime(today.getTime());
-            const monthEnd = endDate ? new Date(`${endDate}T12:00:00`) : new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            const monthEnd = endDate ? new Date(`${endDate}T12:00:00`) : new Date(start.getFullYear(), start.getMonth() + 1, 0);
             const cursor = new Date(start);
             for (; cursor <= monthEnd; cursor.setDate(cursor.getDate() + 1)) {
                 if (!repeatDays.includes(cursor.getDay())) continue;
@@ -4823,7 +4832,7 @@
             document.getElementById('prospecting-message-select').addEventListener('change', renderProspectingPage);
             document.getElementById('prospecting-contacts').addEventListener('click', event => {
                 const button = event.target.closest('[data-send-prospecting]');
-                if (button) sendProspectingMessage(button.dataset.sendProspecting);
+                if (button) sendProspectingMessage(button.dataset.sendProspecting, button.dataset.sendList);
             });
             document.getElementById('prospecting-personal-library').addEventListener('click', async event => {
                 const editList = event.target.closest('[data-edit-personal-list]');
@@ -5011,10 +5020,6 @@
                 const repeatEndDate = document.getElementById('task-repeat-end-input').value;
                 const tasks = getTasks();
                 const taskDate = pendingAddDate || currentSelectedDate;
-                if (taskDate < getLocalDateKey()) {
-                    showToast('Não é possível cadastrar tarefas em dias que já passaram.', 'error');
-                    return;
-                }
                 const existingDates = buildRecurringTaskDateSet(tasks, title, time, taskDate, repeatEndDate || null);
                 const newTasks = repeatEnabled && repeatDays.length
                     ? createRecurringTasks(title, time, taskDate, repeatDays, {
