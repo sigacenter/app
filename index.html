@@ -2719,13 +2719,22 @@
 
         function normalizeGoalIdsForPersistence(goals) {
             const idMap = new Map();
+            const monthlyIdMap = new Map();
             return goals.map(goal => {
-                const monthlyId = isSupabaseUuid(goal.metaMensalId) ? goal.metaMensalId : crypto.randomUUID();
+                const monthlyIdentity = `${goal.lojaId || ''}:${String(goal.weekStart || '').slice(0, 7)}`;
+                const monthlyId = isSupabaseUuid(goal.metaMensalId)
+                    ? goal.metaMensalId
+                    : monthlyIdMap.get(monthlyIdentity) || crypto.randomUUID();
+                monthlyIdMap.set(monthlyIdentity, monthlyId);
                 if (isSupabaseUuid(goal.id)) return { ...goal, metaMensalId: monthlyId };
-                const identity = `${goal.lojaId || ''}:${goal.weekStart || ''}:${goal.weekEnd || ''}:${(goal.distributions || []).map(item => item.userId).sort().join(',')}`;
+                const identity = goalIdentity(goal);
                 if (!idMap.has(identity)) idMap.set(identity, crypto.randomUUID());
                 return { ...goal, id: idMap.get(identity), metaMensalId: monthlyId };
             });
+        }
+
+        function goalIdentity(goal) {
+            return `${goal.lojaId || goal.loja_id || ''}:${goal.weekStart || goal.semana_inicio || ''}:${goal.weekEnd || goal.semana_fim || ''}`;
         }
 
         function getWeeklyGoals() {
@@ -2750,11 +2759,24 @@
                 }, item.userId ?? item.vendedor_id ?? null))
                 .filter(Boolean);
             const merged = new Map();
-            [...weeklyGoals, ...legacyGoals].forEach(goal => {
-                const key = goal.id || `${goal.lojaId}:${goal.weekStart}:${goal.weekEnd}`;
+            weeklyGoals.forEach(goal => {
+                const key = goalIdentity(goal);
+                const current = merged.get(key) || { ...goal, distributions: [] };
+                const byUser = new Map([...current.distributions, ...goal.distributions].map(item => [String(goalEntryUserId(item) || item.userId || ''), item]));
+                merged.set(key, { ...current, ...goal, distributions: [...byUser.values()] });
+            });
+            const weeklyIdentities = new Set(weeklyGoals.map(goal => goalIdentity(goal)));
+            legacyGoals.forEach(goal => {
+                const key = goalIdentity(goal);
+                if (weeklyIdentities.has(key)) return;
                 const current = merged.get(key) || { ...goal, distributions: [] };
                 const byUser = new Map([...current.distributions, ...goal.distributions].map(item => [String(goalEntryUserId(item) || item.userId || item.vendedor_id || item.vendorId || ''), item]));
                 merged.set(key, { ...current, ...goal, distributions: [...byUser.values()] });
+            });
+            weeklyGoals.forEach(goal => {
+                const current = merged.get(goalIdentity(goal));
+                const byUser = new Map((current?.distributions || []).map(item => [String(goalEntryUserId(item) || item.userId || ''), item]));
+                merged.set(goalIdentity(goal), { ...current, distributions: [...byUser.values()] });
             });
             return [...merged.values()].sort((first, second) => (first.weekStart || '').localeCompare(second.weekStart || ''));
         }
@@ -2767,7 +2789,7 @@
 
             const previousLegacy = readStoredList('siga-metas');
             const legacyGoals = normalizedList.flatMap(goal => (goal.distributions || []).map(distribution => ({
-                id: previousLegacy.find(item => String(item.lojaId || item.loja_id) === String(goal.lojaId) && String(item.userId || item.vendedor_id) === String(distribution.userId) && String(item.weekStart || item.semana_inicio) === String(goal.weekStart) && isSupabaseUuid(item.id))?.id || crypto.randomUUID(),
+                id: previousLegacy.find(item => goalIdentity(item) === goalIdentity(goal) && String(item.userId || item.vendedor_id) === String(distribution.userId) && isSupabaseUuid(item.id))?.id || crypto.randomUUID(),
                 lojaId: goal.lojaId,
                 userId: distribution.userId,
                 weekStart: goal.weekStart,
@@ -2779,14 +2801,17 @@
                 value: Number(distribution.value || distribution.diamond || 0),
                 month: goal.weekStart ? goal.weekStart.slice(0, 7) : new Date().toISOString().slice(0, 7)
             })));
-            const mergedLegacy = mergeStoredLists(
-                previousLegacy.filter(item => !legacyGoals.some(goal => goal.id === item.id && (item.lojaId || item.loja_id) === goal.lojaId && (item.userId || item.vendedor_id) === goal.userId)),
-                legacyGoals
-            );
+            const legacyIdentity = item => `${goalIdentity(item)}:${item.userId || item.vendedor_id || ''}`;
+            const legacyByIdentity = new Map();
+            legacyGoals.forEach(item => legacyByIdentity.set(legacyIdentity(item), item));
+            const mergedLegacy = [...legacyByIdentity.values()];
             localStorage.setItem('siga-metas', JSON.stringify(mergedLegacy));
             syncStoredList('siga-metas', mergedLegacy, previousLegacy.filter(item => !mergedLegacy.some(next => next.id === item.id)).map(item => item.id));
 
             try {
+                const previousMonthlyIds = previous.map(item => item.metaMensalId).filter(isSupabaseUuid);
+                const currentMonthlyIds = normalizedList.map(item => item.metaMensalId).filter(isSupabaseUuid);
+                const removedMonthlyIds = previousMonthlyIds.filter(id => !currentMonthlyIds.includes(id));
                 if (normalizedList.length) {
                     const monthlyRows = [...new Map(normalizedList.map(item => [item.metaMensalId, {
                         id: item.metaMensalId,
@@ -2806,6 +2831,10 @@
                     const { error: legacyError } = await sigaSupabase.from('metas').upsert(legacyRows, { onConflict: 'id' });
                     if (legacyError) throw legacyError;
                 }
+                if (removedMonthlyIds.length) {
+                    const { error: monthlyDeleteError } = await sigaSupabase.from('metas_mensais').delete().in('id', removedMonthlyIds);
+                    if (monthlyDeleteError) throw monthlyDeleteError;
+                }
             } catch (error) {
                 console.warn('Sincronização direta de metas falhou:', { message: error.message, code: error.code, details: error.details, hint: error.hint });
             }
@@ -2815,6 +2844,33 @@
             const localGoals = getWeeklyGoals();
             if (!localGoals.length) return;
             await saveWeeklyGoals(localGoals);
+        }
+
+        async function removeDuplicateRemoteGoals() {
+            const lojaId = getSession()?.lojaId;
+            if (!lojaId) return;
+            for (const table of ['metas_semanais', 'metas']) {
+                const columns = table === 'metas_semanais' ? 'id,loja_id,semana_inicio,semana_fim,updated_at' : 'id,loja_id,vendedor_id,semana_inicio,semana_fim,updated_at';
+                const { data, error } = await sigaSupabase.from(table).select(columns).eq('loja_id', lojaId);
+                if (error || !Array.isArray(data)) {
+                    if (error) console.warn(`Falha ao verificar duplicatas em ${table}:`, error.message);
+                    continue;
+                }
+                const groups = new Map();
+                data.forEach(row => {
+                    const identity = table === 'metas_semanais'
+                        ? `${row.loja_id}:${row.semana_inicio}:${row.semana_fim}`
+                        : `${row.loja_id}:${row.vendedor_id}:${row.semana_inicio}:${row.semana_fim}`;
+                    const current = groups.get(identity);
+                    if (!current || String(row.updated_at || '') > String(current.updated_at || '')) groups.set(identity, row);
+                });
+                const keepIds = new Set([...groups.values()].map(row => row.id));
+                const duplicateIds = data.map(row => row.id).filter(id => !keepIds.has(id));
+                if (duplicateIds.length) {
+                    const { error: deleteError } = await sigaSupabase.from(table).delete().in('id', duplicateIds);
+                    if (deleteError) console.warn(`Falha ao remover duplicatas de ${table}:`, deleteError.message);
+                }
+            }
         }
 
         function getGoals() { return getWeeklyGoals(); }
@@ -3601,7 +3657,10 @@
             if (data.session && getSession()?.type === 'master') saveSession({ type: 'master' });
             if (getSession()?.type === 'master') await removeDemoStoresFromSupabase();
             await hydrateFromSupabase();
-            if (getSession()?.type === 'user') await migrateLocalGoalsToSupabase();
+            if (getSession()?.type === 'user') {
+                await migrateLocalGoalsToSupabase();
+                if (getSession()?.role === 'gerente') await removeDuplicateRemoteGoals();
+            }
             retryPendingSupabaseSyncs();
             pruneExpiredProjectData();
             if (getSession()?.type === 'user' && getSession()?.role === 'gerente' && location.hash === '#manager-goals') {
