@@ -3067,18 +3067,34 @@
             return { goal: goalValues, target, total, ticketAverage, dailyMetrics, weeklyTarget: weekTarget, start: salesStart, end: salesEnd, period };
         }
 
-        function renderGoalMarkers(goal) {
+        function goalMarkerScale(goal) {
             const values = { bronze: Number(goal.bronze || 0), silver: Number(goal.silver || 0), gold: Number(goal.gold || 0), diamond: Number(goal.diamond || 0) };
             const tiers = [['bronze', 'Bronze', 'tier-bronze'], ['silver', 'Prata', 'tier-silver'], ['gold', 'Ouro', 'tier-gold'], ['diamond', 'Diamante', 'tier-diamond']];
             const activeTiers = tiers.filter(([key]) => values[key] > 0);
             const activeValues = activeTiers.map(([key]) => values[key]);
+            if (!activeValues.length) return { values, activeTiers, minimum: 0, maximum: 0, range: 0, start: 0, span: 0 };
             const minimum = Math.min(...activeValues);
             const maximum = Math.max(...activeValues);
             const range = maximum - minimum;
             const start = activeTiers.length === 1 ? 50 : 8;
             const span = activeTiers.length === 1 ? 0 : 84;
-            document.getElementById('goal-markers').innerHTML = activeTiers.map(([key, label, color]) => {
-                const position = range ? start + ((values[key] - minimum) / range) * span : 50;
+            return { values, activeTiers, minimum, maximum, range, start, span };
+        }
+
+        function goalProgressPercent(value, goal) {
+            const scale = goalMarkerScale(goal);
+            if (!scale.activeTiers.length || scale.maximum <= 0) return 0;
+            const current = Math.max(0, Number(value || 0));
+            if (scale.activeTiers.length === 1) return Math.min(100, current / scale.maximum * 100);
+            if (current <= scale.minimum) return Math.min(scale.start, current / scale.minimum * scale.start);
+            if (current >= scale.maximum) return current === scale.maximum ? scale.start + scale.span : Math.min(100, scale.start + scale.span + ((current - scale.maximum) / scale.maximum) * (100 - scale.start - scale.span));
+            return scale.start + ((current - scale.minimum) / scale.range) * scale.span;
+        }
+
+        function renderGoalMarkers(goal) {
+            const scale = goalMarkerScale(goal);
+            document.getElementById('goal-markers').innerHTML = scale.activeTiers.map(([key, label, color]) => {
+                const position = scale.range ? scale.start + ((scale.values[key] - scale.minimum) / scale.range) * scale.span : 50;
                 return `<button type="button" data-goal-tier="${key}" class="absolute -translate-x-1/2 text-center" style="left:${position}%"><span class="mx-auto block h-2 w-0.5 bg-slate-300"></span><span class="mt-1 block whitespace-nowrap rounded-full px-1 text-[8px] font-black uppercase ${color} text-white">${label}</span></button>`;
             }).join('');
         }
@@ -3098,7 +3114,7 @@
             const data = currentGoalData();
             const goal = data.goal;
             const target = Number(goal.diamond || data.target || 0);
-            const percent = target > 0 ? Math.min(100, data.total / target * 100) : 0;
+            const percent = goalProgressPercent(data.total, goal);
             const period = data.period || 'semana';
             const label = period === 'dia' ? 'Meta Diária' : 'Meta Semanal';
             document.getElementById('period-title').textContent = label;
