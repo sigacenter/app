@@ -315,6 +315,8 @@ alter table public.metas_semanais
 alter table public.metas_semanais
     add column if not exists meta_mensal_id uuid;
 alter table public.metas_semanais
+    alter column meta_mensal_id drop not null;
+alter table public.metas_semanais
     add column if not exists nome text default '';
 alter table public.metas_semanais
     add column if not exists semana_inicio date;

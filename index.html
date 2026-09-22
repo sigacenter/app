@@ -1221,7 +1221,6 @@
                 addRequest('condicionais', 'siga-condicionais', ownerColumn || 'vendedor_id', ownerValue);
                 addRequest('vendas_loja', 'siga-vendas-loja', 'loja_id', session.lojaId);
                 addRequest('metas', 'siga-metas', 'vendedor_id', userId);
-                addRequest('metas_semanais', 'siga-metas-semanais', 'loja_id', session.lojaId);
                 addRequest('humor_registros', scopedKey('siga-humor-registros'), 'vendedor_id', userId);
                 addRequest('conteudos', 'siga-conteudos');
             }
@@ -2740,17 +2739,11 @@
 
         function normalizeGoalIdsForPersistence(goals) {
             const idMap = new Map();
-            const monthlyIdMap = new Map();
             return goals.map(goal => {
-                const monthlyIdentity = `${goal.lojaId || ''}:${String(goal.weekStart || '').slice(0, 7)}`;
-                const monthlyId = isSupabaseUuid(goal.metaMensalId)
-                    ? goal.metaMensalId
-                    : monthlyIdMap.get(monthlyIdentity) || crypto.randomUUID();
-                monthlyIdMap.set(monthlyIdentity, monthlyId);
-                if (isSupabaseUuid(goal.id)) return { ...goal, metaMensalId: monthlyId };
+                if (isSupabaseUuid(goal.id)) return { ...goal, metaMensalId: null };
                 const identity = goalIdentity(goal);
                 if (!idMap.has(identity)) idMap.set(identity, crypto.randomUUID());
-                return { ...goal, id: idMap.get(identity), metaMensalId: monthlyId };
+                return { ...goal, id: idMap.get(identity), metaMensalId: null };
             });
         }
 
@@ -2806,7 +2799,8 @@
             const normalizedList = normalizeGoalIdsForPersistence((Array.isArray(list) ? list : []).map(item => normalizeWeeklyGoal(item)).filter(Boolean));
             const previous = getWeeklyGoals();
             localStorage.setItem('siga-metas-semanais', JSON.stringify(normalizedList));
-            syncStoredList('siga-metas-semanais', normalizedList, previous.filter(item => !normalizedList.some(next => next.id === item.id)).map(item => item.id));
+            clearPendingSupabaseSync('siga-metas-semanais');
+            pendingSupabaseSyncs.delete('siga-metas-semanais');
 
             const previousLegacy = readStoredList('siga-metas');
             const legacyGoals = normalizedList.flatMap(goal => (goal.distributions || []).map(distribution => ({
@@ -2830,39 +2824,10 @@
             syncStoredList('siga-metas', mergedLegacy, previousLegacy.filter(item => !mergedLegacy.some(next => next.id === item.id)).map(item => item.id));
 
             try {
-                const previousMonthlyIds = previous.map(item => item.metaMensalId).filter(isSupabaseUuid);
-                const currentMonthlyIds = normalizedList.map(item => item.metaMensalId).filter(isSupabaseUuid);
-                const removedMonthlyIds = previousMonthlyIds.filter(id => !currentMonthlyIds.includes(id));
-                if (normalizedList.length) {
-                    const monthlyRowsById = new Map();
-                    normalizedList.forEach(item => {
-                        const monthlyId = item.metaMensalId;
-                        const monthlyRow = monthlyRowsById.get(monthlyId) || {
-                            id: monthlyId,
-                            loja_id: item.lojaId,
-                            mes_referencia: `${item.weekStart?.slice(0, 7) || new Date().toISOString().slice(0, 7)}-01`,
-                            valor_total: 0
-                        };
-                        monthlyRow.valor_total += Math.max(0, Number(item.total || 0));
-                        monthlyRowsById.set(monthlyId, monthlyRow);
-                    });
-                    const monthlyRows = [...monthlyRowsById.values()].filter(item => item.valor_total > 0);
-                    if (monthlyRows.length !== monthlyRowsById.size) throw new Error('Existe uma meta mensal com valor total igual a zero.');
-                    const { error: monthlyError } = await sigaSupabase.from('metas_mensais').upsert(monthlyRows, { onConflict: 'id' });
-                    if (monthlyError) throw monthlyError;
-                    const weeklyRows = normalizedList.map(item => databaseRowFromApp('metas_semanais', item));
-                    const { error: weeklyError } = await sigaSupabase.from('metas_semanais').upsert(weeklyRows, { onConflict: 'id' });
-                    if (weeklyError) throw weeklyError;
-                }
-
                 if (mergedLegacy.length) {
                     const legacyRows = mergedLegacy.map(item => databaseRowFromApp('metas', item));
                     const { error: legacyError } = await sigaSupabase.from('metas').upsert(legacyRows, { onConflict: 'id' });
                     if (legacyError) throw legacyError;
-                }
-                if (removedMonthlyIds.length) {
-                    const { error: monthlyDeleteError } = await sigaSupabase.from('metas_mensais').delete().in('id', removedMonthlyIds);
-                    if (monthlyDeleteError) throw monthlyDeleteError;
                 }
             } catch (error) {
                 console.warn('Sincronização direta de metas falhou:', { message: error.message, code: error.code, details: error.details, hint: error.hint });
