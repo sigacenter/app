@@ -697,6 +697,7 @@
         <div class="grid gap-3 md:grid-cols-3"><div class="rounded-2xl bg-indigo-600 p-5 text-white"><p class="text-[10px] font-black uppercase">Vendas equipe</p><p id="manager-report-total" class="mt-1 text-3xl font-black">R$ 0,00</p></div><div class="rounded-2xl bg-emerald-500 p-5 text-white"><p class="text-[10px] font-black uppercase">Quantidade</p><p id="manager-report-count" class="mt-1 text-3xl font-black">0</p></div><div class="rounded-2xl bg-amber-400 p-5 text-white"><p class="text-[10px] font-black uppercase">Meta mensal loja</p><p id="manager-store-goal-total" class="mt-1 text-3xl font-black">R$ 0,00</p></div></div>
         <section id="manager-product-analytics" class="rounded-[2rem] border border-orange-100 bg-white p-5 shadow-sm"><div class="mb-4 flex items-start justify-between gap-3"><div><h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Mapa de perdas da equipe</h3><p class="mt-1 text-[10px] font-semibold text-slate-400">Motivos e produtos mais citados pelos vendedores</p></div><i data-lucide="flame" class="h-5 w-5 text-orange-500"></i></div><div id="manager-product-analytics-content" class="grid gap-4 md:grid-cols-2"></div></section>
         <section class="rounded-[2rem] border border-slate-100 bg-white p-5 shadow-sm"><h3 class="mb-3 text-sm font-black uppercase tracking-wider text-slate-800">Vendas por vendedor</h3><div id="manager-report-list" class="space-y-2"></div></section>
+        <section id="manager-outcome-management" class="rounded-[2rem] border border-indigo-100 bg-white p-5 shadow-sm"><h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Resultados de atendimento</h3><p class="mt-1 text-[10px] text-slate-400">Edite a lista que aparece em “O que aconteceu?” para toda a equipe.</p><form id="manager-outcome-form" class="mt-4 grid gap-2 md:grid-cols-[1fr_2fr_auto]"><input type="hidden" id="manager-outcome-editing-id"><input id="manager-outcome-code" required maxlength="40" placeholder="Código interno" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><input id="manager-outcome-label" required maxlength="100" placeholder="Texto exibido para a equipe" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><button type="submit" class="rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-black text-white">Salvar resultado</button></form><div id="manager-outcome-list" class="mt-4 space-y-2"></div></section>
         <section class="rounded-[2rem] border border-emerald-100 bg-white p-5 shadow-sm"><h3 class="mb-3 text-sm font-black tracking-wider text-slate-800">Venda da loja para meta mensal</h3><form id="manager-store-sale-form" class="grid gap-3 md:grid-cols-4"><input id="manager-store-sale-client" required placeholder="Nome/descrição" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><input id="manager-store-sale-value" required inputmode="decimal" data-money-input placeholder="R$ 0,00" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><input id="manager-store-sale-date" required type="date" class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none"><button type="submit" class="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-black text-white">Lançar venda da loja</button></form><div id="manager-store-sales-list" class="mt-4 space-y-2"></div></section>
     </section>
 
@@ -849,6 +850,7 @@
             'siga-conteudos': 'conteudos',
             'siga-produtos': 'produtos',
             'siga-prospeccao': 'prospeccao_listas',
+            'siga-atendimento-resultados': 'atendimento_resultados',
             'siga-humor-registros': 'humor_registros',
             'siga-treinamentos': 'treinamentos',
             'siga-treinamento-modulos': 'treinamento_modulos'
@@ -921,6 +923,7 @@
             if (table === 'metas') return { id: item.id, loja_id: item.lojaId || lojaId, vendedor_id: item.userId || userId, semana_inicio: item.weekStart, semana_fim: item.weekEnd, bronze: Number(item.bronze || 0), prata: Number(item.silver || 0), ouro: Number(item.gold || 0), diamante: Number(item.diamond || item.value || 0), mes_referencia: `${item.month || item.weekStart?.slice(0, 7) || new Date().toISOString().slice(0, 7)}-01`, mensal_bronze: Number(item.monthlyBronze || 0), mensal_prata: Number(item.monthlySilver || 0), mensal_ouro: Number(item.monthlyGold || 0), mensal_diamante: Number(item.monthlyDiamond || 0), meta_mensal: Number(item.monthly || item.monthlyDiamond || 0) };
             if (table === 'conteudos') return { id: item.id, tipo: item.type, texto: item.text, humor: item.mood || null, ativo: item.active !== false };
             if (table === 'humor_registros') return { loja_id: lojaId, vendedor_id: userId, data: item.date, humor: item.mood, updated_at: item.updatedAt || new Date().toISOString() };
+            if (table === 'atendimento_resultados') return { id: item.id, loja_id: item.lojaId, codigo: item.code, rotulo: item.label, ordem: Number(item.order || 0), ativo: item.active !== false };
             if (table === 'metas_semanais') return { id: item.id, loja_id: item.lojaId || lojaId, meta_mensal_id: item.metaMensalId, nome: item.name, semana_inicio: item.weekStart, semana_fim: item.weekEnd, valor_total: item.total, distribuicao: item.distributions || [], feriados: item.holidays || [] };
             if (table === 'vendas_loja') return { id: item.id, loja_id: item.lojaId || getSession()?.lojaId || null, descricao: item.client || '', valor: Number(item.value || 0), data: item.date };
             if (table === 'produtos') return { id: item.id, nome: item.name, aceita_genero: item.gender === true, ativo: item.active !== false };
@@ -957,6 +960,7 @@
             if (table === 'metas') return { ...row, lojaId: row.loja_id, userId: row.vendedor_id, weekStart: row.semana_inicio, weekEnd: row.semana_fim, bronze: Number(row.bronze || 0), silver: Number(row.prata || 0), gold: Number(row.ouro || 0), diamond: Number(row.diamante || 0), month: String(row.mes_referencia || '').slice(0, 7), monthlyBronze: Number(row.mensal_bronze ?? 0), monthlySilver: Number(row.mensal_prata ?? 0), monthlyGold: Number(row.mensal_ouro ?? 0), monthlyDiamond: Number(row.mensal_diamante ?? row.meta_mensal ?? 0), monthly: Number(row.mensal_diamante ?? row.meta_mensal ?? 0) };
             if (table === 'conteudos') return { ...row, type: row.tipo, text: row.texto, mood: row.humor || row.mood || '', active: row.ativo !== false };
             if (table === 'humor_registros') return { ...row, userId: row.vendedor_id, date: row.data, mood: row.humor };
+            if (table === 'atendimento_resultados') return { ...row, lojaId: row.loja_id, code: row.codigo, label: row.rotulo, order: Number(row.ordem || 0), active: row.ativo !== false };
             if (table === 'metas_semanais') return { ...row, lojaId: row.loja_id, metaMensalId: row.meta_mensal_id, name: row.nome, weekStart: row.semana_inicio, weekEnd: row.semana_fim, total: Number(row.valor_total || 0), holidays: row.feriados || [], distributions: row.distribuicao || [] };
             if (table === 'vendas_loja') return { ...row, lojaId: row.loja_id, client: row.descricao, value: Number(row.valor || 0), date: row.data, datetime: `${row.data}T12:00:00`, storeSale: true };
             if (table === 'produtos') return { ...row, name: row.nome ?? row.name, gender: row.aceita_genero ?? row.gender ?? false, active: row.ativo !== false };
@@ -1259,6 +1263,7 @@
                 addRequest('metas', 'siga-metas', ownerColumn || 'vendedor_id', ownerValue);
                 addRequest('humor_registros', scopedKey('siga-humor-registros'), 'vendedor_id', userId);
                 addRequest('conteudos', 'siga-conteudos');
+                addRequest('atendimento_resultados', 'siga-atendimento-resultados', 'loja_id', session.lojaId);
             }
             await Promise.all(requests.map(async ({ table, storageKey, column, value }) => {
                 let query = table === 'perfis' ? sigaSupabase.from(table).select('id,loja_id,nome,cargo,username,slug,full_slug,created_at') : sigaSupabase.from(table).select('*');
@@ -1280,7 +1285,7 @@
                 const sanitizedList = table === 'lojas' ? list.filter(store => !isDemoStore(store)) : list;
                 if (table === 'humor_registros') {
                     writeStoredList(storageKey, Object.fromEntries(sanitizedList.map(item => [item.date, item.mood])));
-                } else if (table === 'lojas' || table === 'perfis' || table === 'prospeccao_listas' || table === 'conteudos' || table === 'treinamentos' || table === 'treinamento_modulos') {
+                } else if (table === 'lojas' || table === 'perfis' || table === 'prospeccao_listas' || table === 'conteudos' || table === 'treinamentos' || table === 'treinamento_modulos' || table === 'atendimento_resultados') {
                     writeStoredList(storageKey, sanitizedList);
                 } else if (sanitizedList.length) {
                     const scopedTables = new Set(['tarefas', 'vendas', 'atendimentos', 'condicionais', 'vendas_loja']);
@@ -2693,6 +2698,33 @@
             lucide.createIcons();
         }
 
+        function renderManagerOutcomeList() {
+            const target = document.getElementById('manager-outcome-list');
+            if (!target) return;
+            const outcomes = getServiceOutcomes();
+            target.innerHTML = outcomes.map(item => `<article class="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3"><div><p class="text-xs font-black text-slate-700">${escapeHtml(item.label)}</p><p class="mt-1 text-[10px] text-slate-400">${escapeHtml(item.code)}</p></div><div class="flex gap-1"><button type="button" data-edit-manager-outcome="${item.id}" class="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-indigo-600" aria-label="Editar resultado"><i data-lucide="pencil" class="h-4 w-4"></i></button><button type="button" data-delete-manager-outcome="${item.id}" class="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-red-600" aria-label="Excluir resultado"><i data-lucide="trash-2" class="h-4 w-4"></i></button></div></article>`).join('');
+            lucide.createIcons();
+        }
+
+        async function saveManagerOutcomes(outcomes) {
+            const session = getSession();
+            const normalized = outcomes.map((item, index) => ({ id: item.id || crypto.randomUUID(), lojaId: session.lojaId, code: item.code, label: item.label, order: index, active: item.active !== false }));
+            const rows = normalized.map(item => databaseRowFromApp('atendimento_resultados', item));
+            const { error } = await sigaSupabase.from('atendimento_resultados').upsert(rows, { onConflict: 'id' });
+            if (error) throw error;
+            const keepIds = normalized.map(item => item.id);
+            const previous = readStoredList('siga-atendimento-resultados');
+            const removedIds = previous.map(item => item.id).filter(id => !keepIds.includes(id));
+            if (removedIds.length) {
+                const { error: deleteError } = await sigaSupabase.from('atendimento_resultados').delete().in('id', removedIds);
+                if (deleteError) throw deleteError;
+            }
+            writeStoredList('siga-atendimento-resultados', normalized);
+            renderServiceOutcomeOptions();
+            renderManagerOutcomeList();
+            initServiceOutcomeCards();
+        }
+
         function initManagerReport() {
             configureManagerMobilePanels();
             const session = getSession();
@@ -2700,10 +2732,26 @@
             select.innerHTML = '<option value="">Todos os vendedores</option>' + getUsuarios().filter(user => user.lojaId === session?.lojaId && user.role === 'vendedor').map(user => `<option value="${user.id}">${escapeHtml(user.name)}</option>`).join('');
             document.getElementById('manager-store-sale-date').value = getLocalDateKey();
             setManagerReportDates();
+            renderManagerOutcomeList();
             if (document.getElementById('manager-report-page').dataset.bound === 'true') { renderManagerReport(); return; }
             document.getElementById('manager-report-page').dataset.bound = 'true';
             ['manager-report-vendor', 'manager-report-start', 'manager-report-end'].forEach(id => document.getElementById(id).addEventListener('change', renderManagerReport));
             document.getElementById('manager-report-period').addEventListener('change', () => { setManagerReportDates(); renderManagerReport(); });
+            document.getElementById('manager-outcome-form').addEventListener('submit', async event => {
+                event.preventDefault();
+                const id = document.getElementById('manager-outcome-editing-id').value || crypto.randomUUID();
+                const code = slugify(document.getElementById('manager-outcome-code').value.trim());
+                const label = document.getElementById('manager-outcome-label').value.trim();
+                if (!code || !label) return;
+                const outcomes = getServiceOutcomes().filter(item => item.id !== id && item.code !== code);
+                try { await saveManagerOutcomes([...outcomes, { id, code, label, active: true }]); event.target.reset(); document.getElementById('manager-outcome-editing-id').value = ''; showToast('Resultado salvo.'); } catch (error) { showToast(`Falha ao salvar resultado: ${error.message}`, 'error'); }
+            });
+            document.getElementById('manager-outcome-list').addEventListener('click', async event => {
+                const edit = event.target.closest('[data-edit-manager-outcome]');
+                if (edit) { const item = getServiceOutcomes().find(outcome => outcome.id === edit.dataset.editManagerOutcome); if (item) { document.getElementById('manager-outcome-editing-id').value = item.id; document.getElementById('manager-outcome-code').value = item.code; document.getElementById('manager-outcome-label').value = item.label; } return; }
+                const remove = event.target.closest('[data-delete-manager-outcome]');
+                if (remove && await siteConfirm('Excluir este resultado?')) { try { await saveManagerOutcomes(getServiceOutcomes().filter(item => item.id !== remove.dataset.deleteManagerOutcome)); showToast('Resultado excluído.'); } catch (error) { showToast(`Falha ao excluir resultado: ${error.message}`, 'error'); } }
+            });
             document.getElementById('manager-store-sale-form').addEventListener('submit', event => {
                 event.preventDefault();
                 const session = getSession();
@@ -4630,6 +4678,29 @@
             modal.classList.add('flex');
         }
         function closeServiceModal() { editingServiceId = null; pendingAddDate = null; const modal = document.getElementById('service-modal'); modal.classList.add('hidden'); modal.classList.remove('flex'); }
+        const defaultServiceOutcomes = [
+            { code: 'converted', label: 'Venda realizada' },
+            { code: 'conditional', label: 'Levou condicional' },
+            { code: 'authorized', label: 'Venda permitida / aguardando fechamento' },
+            { code: 'no-product', label: 'Não tínhamos o produto' },
+            { code: 'just-looking', label: 'Só estava olhando' },
+            { code: 'expensive', label: 'Achou caro' },
+            { code: 'no-decision', label: 'Não tomou decisão' },
+            { code: 'competitor', label: 'Preferiu a concorrência' },
+            { code: 'return-later', label: 'Vai voltar depois' },
+            { code: 'other', label: 'Outro motivo' }
+        ];
+        function getServiceOutcomes() {
+            const stored = readStoredList('siga-atendimento-resultados');
+            return (stored.length ? stored : defaultServiceOutcomes.map((item, index) => ({ ...item, id: item.code, order: index, active: true, lojaId: getSession()?.lojaId }))).filter(item => item.active !== false).sort((first, second) => Number(first.order || 0) - Number(second.order || 0));
+        }
+        function renderServiceOutcomeOptions(selectedCode = '') {
+            const outcomes = getServiceOutcomes();
+            const select = document.getElementById('service-outcome');
+            if (!select) return;
+            select.innerHTML = outcomes.map(item => `<option value="${escapeHtml(item.code)}">${escapeHtml(item.label)}</option>`).join('');
+            select.value = outcomes.some(item => item.code === selectedCode) ? selectedCode : outcomes[0]?.code || '';
+        }
         function updateServiceFields() {
             const outcome = document.getElementById('service-outcome').value;
             const converted = outcome === 'converted';
@@ -4641,8 +4712,13 @@
 
         function initServiceOutcomeCards() {
             const select = document.getElementById('service-outcome');
-            const options = Array.from(select.options).map(option => ({ value: option.value, label: option.textContent }));
+            renderServiceOutcomeOptions(select.value);
+            const options = getServiceOutcomes().map(option => ({ value: option.code, label: option.label }));
             select.classList.add('hidden');
+            const previousWrapper = document.getElementById('service-outcome-cards');
+            previousWrapper?.remove();
+            const previousExpand = document.getElementById('service-outcome-expand');
+            previousExpand?.remove();
             const wrapper = document.createElement('div');
             wrapper.id = 'service-outcome-cards';
             wrapper.className = 'grid grid-cols-2 gap-2 md:grid-cols-3';

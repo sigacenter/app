@@ -4,6 +4,26 @@
 
 create extension if not exists pgcrypto;
 
+create table if not exists public.atendimento_resultados (
+    id uuid primary key default gen_random_uuid(),
+    loja_id uuid not null references public.lojas(id) on delete cascade,
+    codigo text not null,
+    rotulo text not null,
+    ordem integer not null default 0,
+    ativo boolean not null default true,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    unique (loja_id, codigo)
+);
+
+grant select, insert, update, delete on public.atendimento_resultados to anon, authenticated;
+alter table public.atendimento_resultados enable row level security;
+drop policy if exists atendimento_resultados_anon_all on public.atendimento_resultados;
+create policy atendimento_resultados_anon_all
+    on public.atendimento_resultados for all to anon, authenticated
+    using (true)
+    with check (true);
+
 create table if not exists public.produtos (
     id uuid primary key default gen_random_uuid(),
     nome text not null,
