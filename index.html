@@ -1255,7 +1255,7 @@
                 addRequest('atendimentos', 'siga-atendimentos', ownerColumn || 'vendedor_id', ownerValue);
                 addRequest('condicionais', 'siga-condicionais', ownerColumn || 'vendedor_id', ownerValue);
                 addRequest('vendas_loja', 'siga-vendas-loja', 'loja_id', session.lojaId);
-                addRequest('metas', 'siga-metas', 'vendedor_id', userId);
+                addRequest('metas', 'siga-metas', ownerColumn || 'vendedor_id', ownerValue);
                 addRequest('humor_registros', scopedKey('siga-humor-registros'), 'vendedor_id', userId);
                 addRequest('conteudos', 'siga-conteudos');
             }
