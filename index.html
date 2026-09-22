@@ -920,7 +920,7 @@
             if (table === 'metas') return { id: item.id, loja_id: item.lojaId || lojaId, vendedor_id: item.userId || userId, semana_inicio: item.weekStart, semana_fim: item.weekEnd, bronze: item.bronze, prata: item.silver, ouro: item.gold, diamante: item.diamond, mes_referencia: `${item.month || item.weekStart?.slice(0, 7) || new Date().toISOString().slice(0, 7)}-01`, mensal_bronze: item.monthlyBronze, mensal_prata: item.monthlySilver, mensal_ouro: item.monthlyGold, mensal_diamante: item.monthlyDiamond, meta_mensal: item.monthlyDiamond };
             if (table === 'conteudos') return { id: item.id, tipo: item.type, texto: item.text, humor: item.mood || null, ativo: item.active !== false };
             if (table === 'humor_registros') return { loja_id: lojaId, vendedor_id: userId, data: item.date, humor: item.mood, updated_at: item.updatedAt || new Date().toISOString() };
-            if (table === 'metas_semanais') return { id: item.id, loja_id: item.lojaId || lojaId, nome: item.name, semana_inicio: item.weekStart, semana_fim: item.weekEnd, valor_total: item.total, distribuicao: item.distributions || [], feriados: item.holidays || [] };
+            if (table === 'metas_semanais') return { id: item.id, loja_id: item.lojaId || lojaId, meta_mensal_id: item.metaMensalId, nome: item.name, semana_inicio: item.weekStart, semana_fim: item.weekEnd, valor_total: item.total, distribuicao: item.distributions || [], feriados: item.holidays || [] };
             if (table === 'vendas_loja') return { id: item.id, loja_id: item.lojaId || getSession()?.lojaId || null, descricao: item.client || '', valor: Number(item.value || 0), data: item.date };
             if (table === 'produtos') return { id: item.id, nome: item.name, aceita_genero: item.gender === true, ativo: item.active !== false };
             if (table === 'prospeccao_listas') return { id: item.id, loja_id: item.lojaId, owner_id: item.ownerId || null, nome: item.name, dias_disponiveis: item.days || [], contatos: item.contacts || [], mensagens: item.messages || [], tarefa_horario: item.taskTime || null, tarefa_meta_tipo: item.taskTargetMode || 'minimum', tarefa_meta_valor: Number(item.taskTarget || 1), tarefa_vendedores: item.taskVendors || [], created_at: item.createdAt, updated_at: item.updatedAt };
@@ -956,7 +956,7 @@
             if (table === 'metas') return { ...row, lojaId: row.loja_id, userId: row.vendedor_id, weekStart: row.semana_inicio, weekEnd: row.semana_fim, bronze: Number(row.bronze || 0), silver: Number(row.prata || 0), gold: Number(row.ouro || 0), diamond: Number(row.diamante || 0), month: String(row.mes_referencia || '').slice(0, 7), monthlyBronze: Number(row.mensal_bronze ?? 0), monthlySilver: Number(row.mensal_prata ?? 0), monthlyGold: Number(row.mensal_ouro ?? 0), monthlyDiamond: Number(row.mensal_diamante ?? row.meta_mensal ?? 0), monthly: Number(row.mensal_diamante ?? row.meta_mensal ?? 0) };
             if (table === 'conteudos') return { ...row, type: row.tipo, text: row.texto, mood: row.humor || row.mood || '', active: row.ativo !== false };
             if (table === 'humor_registros') return { ...row, userId: row.vendedor_id, date: row.data, mood: row.humor };
-            if (table === 'metas_semanais') return { ...row, lojaId: row.loja_id, name: row.nome, weekStart: row.semana_inicio, weekEnd: row.semana_fim, total: Number(row.valor_total || 0), holidays: row.feriados || [], distributions: row.distribuicao || [] };
+            if (table === 'metas_semanais') return { ...row, lojaId: row.loja_id, metaMensalId: row.meta_mensal_id, name: row.nome, weekStart: row.semana_inicio, weekEnd: row.semana_fim, total: Number(row.valor_total || 0), holidays: row.feriados || [], distributions: row.distribuicao || [] };
             if (table === 'vendas_loja') return { ...row, lojaId: row.loja_id, client: row.descricao, value: Number(row.valor || 0), date: row.data, datetime: `${row.data}T12:00:00`, storeSale: true };
             if (table === 'produtos') return { ...row, name: row.nome ?? row.name, gender: row.aceita_genero ?? row.gender ?? false, active: row.ativo !== false };
             if (table === 'prospeccao_listas') return { ...row, lojaId: row.loja_id, ownerId: row.owner_id || null, name: row.nome ?? row.name, days: row.dias_disponiveis || [], contacts: row.contatos || [], messages: row.mensagens || [], taskTime: row.tarefa_horario || '', taskTargetMode: row.tarefa_meta_tipo || 'minimum', taskTarget: Number(row.tarefa_meta_valor || 1), taskVendors: row.tarefa_vendedores || [], createdAt: row.created_at, updatedAt: row.updated_at };
@@ -2707,6 +2707,7 @@
                 ...goal,
                 id: goal.id || `${goal.lojaId || 'loja'}:${goal.weekStart || goal.semana_inicio || Date.now()}`,
                 lojaId: goal.lojaId ?? goal.loja_id ?? null,
+                metaMensalId: goal.metaMensalId ?? goal.meta_mensal_id ?? null,
                 name: goal.name ?? goal.nome ?? 'Semana',
                 weekStart: goal.weekStart ?? goal.semana_inicio ?? '',
                 weekEnd: goal.weekEnd ?? goal.semana_fim ?? '',
@@ -2719,10 +2720,11 @@
         function normalizeGoalIdsForPersistence(goals) {
             const idMap = new Map();
             return goals.map(goal => {
-                if (isSupabaseUuid(goal.id)) return goal;
+                const monthlyId = isSupabaseUuid(goal.metaMensalId) ? goal.metaMensalId : crypto.randomUUID();
+                if (isSupabaseUuid(goal.id)) return { ...goal, metaMensalId: monthlyId };
                 const identity = `${goal.lojaId || ''}:${goal.weekStart || ''}:${goal.weekEnd || ''}:${(goal.distributions || []).map(item => item.userId).sort().join(',')}`;
                 if (!idMap.has(identity)) idMap.set(identity, crypto.randomUUID());
-                return { ...goal, id: idMap.get(identity) };
+                return { ...goal, id: idMap.get(identity), metaMensalId: monthlyId };
             });
         }
 
@@ -2786,22 +2788,26 @@
 
             try {
                 if (normalizedList.length) {
+                    const monthlyRows = [...new Map(normalizedList.map(item => [item.metaMensalId, {
+                        id: item.metaMensalId,
+                        loja_id: item.lojaId,
+                        mes_referencia: `${item.weekStart?.slice(0, 7) || new Date().toISOString().slice(0, 7)}-01`,
+                        valor_total: Number(item.total || 0)
+                    }])).values()];
+                    const { error: monthlyError } = await sigaSupabase.from('metas_mensais').upsert(monthlyRows, { onConflict: 'id' });
+                    if (monthlyError) throw monthlyError;
                     const weeklyRows = normalizedList.map(item => databaseRowFromApp('metas_semanais', item));
                     const { error: weeklyError } = await sigaSupabase.from('metas_semanais').upsert(weeklyRows, { onConflict: 'id' });
-                    if (weeklyError) {
-                        console.warn('Falha ao salvar metas_semanais no Supabase:', weeklyError.message);
-                    }
+                    if (weeklyError) throw weeklyError;
                 }
 
                 if (mergedLegacy.length) {
                     const legacyRows = mergedLegacy.map(item => databaseRowFromApp('metas', item));
                     const { error: legacyError } = await sigaSupabase.from('metas').upsert(legacyRows, { onConflict: 'id' });
-                    if (legacyError) {
-                        console.warn('Falha ao salvar metas do vendedor no Supabase:', legacyError.message);
-                    }
+                    if (legacyError) throw legacyError;
                 }
             } catch (error) {
-                console.warn('Sincronização direta de metas falhou:', error);
+                console.warn('Sincronização direta de metas falhou:', { message: error.message, code: error.code, details: error.details, hint: error.hint });
             }
         }
 
