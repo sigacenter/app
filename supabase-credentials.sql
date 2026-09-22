@@ -4,6 +4,40 @@
 
 create extension if not exists pgcrypto;
 
+-- Todas as telas usam o cliente público do Supabase. Sem estas permissões,
+-- um dispositivo novo não tem cache local para exibir os dados da loja.
+grant select, insert, update, delete on public.lojas to anon, authenticated;
+alter table public.lojas enable row level security;
+drop policy if exists lojas_anon_all on public.lojas;
+create policy lojas_anon_all
+    on public.lojas for all to anon, authenticated
+    using (true)
+    with check (true);
+
+grant select, insert, update, delete on public.vendas to anon, authenticated;
+alter table public.vendas enable row level security;
+drop policy if exists vendas_anon_all on public.vendas;
+create policy vendas_anon_all
+    on public.vendas for all to anon, authenticated
+    using (true)
+    with check (true);
+
+grant select, insert, update, delete on public.vendas_loja to anon, authenticated;
+alter table public.vendas_loja enable row level security;
+drop policy if exists vendas_loja_anon_all on public.vendas_loja;
+create policy vendas_loja_anon_all
+    on public.vendas_loja for all to anon, authenticated
+    using (true)
+    with check (true);
+
+grant select, insert, update, delete on public.conteudos to anon, authenticated;
+alter table public.conteudos enable row level security;
+drop policy if exists conteudos_anon_all on public.conteudos;
+create policy conteudos_anon_all
+    on public.conteudos for all to anon, authenticated
+    using (true)
+    with check (true);
+
 create table if not exists public.humor_registros (
     id uuid primary key default gen_random_uuid(),
     loja_id uuid not null references public.lojas(id) on delete cascade,

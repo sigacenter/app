@@ -1229,7 +1229,14 @@
                 let query = table === 'perfis' ? sigaSupabase.from(table).select('id,loja_id,nome,cargo,username,slug,full_slug,created_at') : sigaSupabase.from(table).select('*');
                 if (column && value) query = query.eq(column, value);
                 const { data, error } = await query;
-                if (error || !data) return;
+                if (error) {
+                    console.warn(`Falha ao carregar ${table} do Supabase:`, error.message, { code: error.code, details: error.details, hint: error.hint });
+                    return;
+                }
+                if (!data) {
+                    console.warn(`Resposta sem dados ao carregar ${table} do Supabase.`);
+                    return;
+                }
                 const list = data.map(row => table === 'lojas' ? { ...row, name: row.nome ?? row.name, createdAt: row.criado_em ?? row.created_at ?? row.createdAt } : table === 'perfis' ? publicProfileFromRow(row) : databaseRowToApp(table, row));
                 if (!list.length && table === 'tarefas') {
                     if (session.role === 'gerente' && !session.viewingUserId) getUsuarios().filter(user => user.lojaId === session.lojaId).forEach(user => writeStoredList(`${storageKey}::${user.id}`, []));
