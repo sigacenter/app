@@ -2840,6 +2840,8 @@
             try {
                 if (mergedLegacy.length) {
                     const legacyRows = mergedLegacy.map(item => databaseRowFromApp('metas', item));
+                    const dependencyError = await ensureSyncDependencies('metas', legacyRows);
+                    if (dependencyError) throw dependencyError;
                     const { error: legacyError } = await sigaSupabase.from('metas').upsert(legacyRows, { onConflict: 'id' });
                     if (legacyError) throw legacyError;
                 }
