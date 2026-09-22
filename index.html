@@ -1101,7 +1101,7 @@
                     clearPendingSupabaseSync(storageKey);
                     return;
                 }
-                if (dependencyError.message?.includes('não foi encontrada neste dispositivo')) {
+                if (dependencyError.message?.includes('não foi encontrada neste dispositivo') || dependencyError.message?.includes('não existe no Supabase')) {
                     clearPendingSupabaseSync(storageKey);
                     console.warn(`Pendência antiga descartada em ${table}:`, dependencyError.message);
                     return;
@@ -1161,7 +1161,20 @@
                     if (error) return error;
                     remoteStores = (data || []).map(store => ({ ...store, name: store.nome, createdAt: store.created_at }));
                     const missingRemoteIds = missingStoreIds.filter(storeId => !remoteStores.some(store => store.id === storeId));
-                    if (missingRemoteIds.length) return new Error(`A loja ${missingRemoteIds.join(', ')} não existe no Supabase.`);
+                    if (missingRemoteIds.length) {
+                        const profileIds = [...new Set(rows.map(row => row.vendedor_id).filter(isSupabaseUuid))];
+                        const { data: profiles, error: profileError } = await sigaSupabase.from('perfis').select('id,loja_id').in('id', profileIds);
+                        if (profileError) return profileError;
+                        const currentStoreIds = [...new Set((profiles || []).map(profile => profile.loja_id).filter(isSupabaseUuid))];
+                        if (currentStoreIds.length !== 1) return new Error(`A loja ${missingRemoteIds.join(', ')} não existe no Supabase e não foi possível descobrir uma loja atual pelos vendedores.`);
+                        const { data: currentStores, error: currentStoreError } = await sigaSupabase.from('lojas').select('id,nome,slug,configuracoes,created_at').in('id', currentStoreIds);
+                        if (currentStoreError) return currentStoreError;
+                        if (!currentStores?.length) return new Error(`A loja ${missingRemoteIds.join(', ')} não existe no Supabase.`);
+                        rows.forEach(row => { if (row.vendedor_id) row.loja_id = currentStoreIds[0]; });
+                        const session = getSession();
+                        if (session && session.lojaId !== currentStoreIds[0]) { session.lojaId = currentStoreIds[0]; saveSession(session); }
+                        remoteStores = currentStores.map(store => ({ ...store, name: store.nome, createdAt: store.created_at }));
+                    }
                     writeStoredList(lojasStorageKey, mergeStoredLists(getLojas(), remoteStores));
                 }
                 const stores = [...localStores, ...remoteStores];
