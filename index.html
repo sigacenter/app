@@ -3120,14 +3120,14 @@
             const dailyTarget = businessDays ? weekTarget / businessDays : weekTarget;
             const start = period === 'dia' ? today : weekly.weekStart;
             const end = period === 'dia' ? today : weekly.weekEnd;
-            const target = period === 'dia' ? dailyTarget : weekTarget;
             const salesStart = start;
             const salesEnd = end;
             const total = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd).reduce((sum, sale) => sum + Number(sale.value || 0), 0);
-            const goalValues = configuredGoalValues(period, weekly, null, target, businessDays);
+            const goalValues = configuredGoalValues(period, weekly, null, dailyTarget, businessDays);
             const weeklySales = sales.filter(sale => sale.date >= weekly.weekStart && sale.date <= weekly.weekEnd);
             const weeklyServices = getServices().filter(service => service.date >= weekly.weekStart && service.date <= weekly.weekEnd);
             const dailyMetrics = calculateDailyGoalMetrics(weekTarget, weekly.weekStart, weekly.weekEnd, weeklySales, weekly.holidays);
+            const target = period === 'dia' ? dailyMetrics.adjustedDaily : weekTarget;
             const ticketSales = sales.filter(sale => sale.date >= salesStart && sale.date <= salesEnd);
             const ticketAverage = ticketSales.length ? total / ticketSales.length : 0;
             const weeklyGoalInsight = buildWeeklyGoalInsight(weekTarget, dailyMetrics.realized, weeklyServices, weeklySales, dailyMetrics.remainingDays);
