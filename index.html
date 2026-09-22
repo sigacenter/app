@@ -2213,13 +2213,14 @@
                     const diamond = Number(values.diamond || Math.max(gold, silver, bronze));
                     const ordered = [bronze, silver, gold, diamond].filter(Boolean);
                     if (!ordered.length) return null;
-                    if (ordered.some((value, index) => index > 0 && value < ordered[index - 1])) return { userId: user.id, invalid: true };
+                    const hasGap = (bronze > 0 && (silver <= 0 || gold <= 0 || diamond <= 0)) || (silver > 0 && (gold <= 0 || diamond <= 0)) || (gold > 0 && diamond <= 0);
+                    if (hasGap || ordered.some((value, index) => index > 0 && value < ordered[index - 1])) return { userId: user.id, invalid: true };
                     return { userId: user.id, percentage: 100, value: diamond, bronze, silver, gold, diamond };
                 }).filter(Boolean);
                 const invalidDistribution = distributions.find(item => item.invalid);
                 if (end < start) { feedback.textContent = 'A data final da semana não pode ser anterior à data inicial.'; return; }
                 if (!distributions.length) { feedback.textContent = 'Defina pelo menos um valor de meta para um vendedor.'; return; }
-                if (invalidDistribution) { feedback.textContent = 'As metas por faixa devem seguir a ordem Bronze ≤ Prata ≤ Ouro ≤ Diamante.'; return; }
+                if (invalidDistribution) { feedback.textContent = 'Preencha as faixas sem deixar lacunas: Bronze, Prata, Ouro e Diamante devem ser crescentes. Também é permitido informar somente Diamante.'; return; }
                 const total = distributions.reduce((sum, item) => sum + Number(item.value || 0), 0);
                 if (!Number.isFinite(total) || total <= 0) { feedback.textContent = 'O valor total da meta precisa ser maior que zero.'; return; }
                 const weeklyGoals = getWeeklyGoals();
